@@ -109,10 +109,10 @@ with col1:
     
     # 添加地圖圖層
     tile_mapping = {
-        "OpenStreetMap": folium.TileLayer('openstreetmap'),
-        "CartoDB positron": folium.TileLayer('cartodbpositron'),
-        "CartoDB dark_matter": folium.TileLayer('cartodbdark_matter'),
-        "Stamen Terrain": folium.TileLayer('stamenterrain')
+        "OpenStreetMap": folium.TileLayer('openstreetmap', attr='OpenStreetMap contributors'),
+        "CartoDB positron": folium.TileLayer('cartodbpositron', attr='CartoDB contributors'),
+        "CartoDB dark_matter": folium.TileLayer('cartodbdark_matter', attr='CartoDB contributors'),
+        "Stamen Terrain": folium.TileLayer('stamenterrain', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.')
     }
     
     if map_style in tile_mapping:
