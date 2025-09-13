@@ -191,14 +191,22 @@ with col1:
                             st.metric("評分", f"{venue.get('rating'):.1f}/5.0")
                         
                         # 操作按鈕
-                        button_col1, button_col2 = st.columns(2)
+                        button_col1, button_col2, button_col3 = st.columns(3)
                         
                         with button_col1:
-                            if st.button(f"📍 地圖", key=f"map_{idx}"):
-                                st.session_state.selected_venue = venue.to_dict()
-                                st.switch_page("pages/2_🗺️_Map_View.py")
+                            if st.button(f"📋 詳情", key=f"detail_{idx}"):
+                                # 設置選定的場地ID並導航到詳情頁面
+                                venue_id = venue.get('id')
+                                if venue_id:
+                                    st.query_params.id = venue_id
+                                    st.switch_page("pages/5_🏢_場地詳情.py")
                         
                         with button_col2:
+                            if st.button(f"📍 地圖", key=f"map_{idx}"):
+                                st.session_state.selected_venue = venue.to_dict()
+                                st.switch_page("pages/2_🗺️_地圖檢視.py")
+                        
+                        with button_col3:
                             if st.button(f"❤️ 收藏", key=f"fav_{idx}"):
                                 # 添加到收藏列表
                                 if 'favorites' not in st.session_state:
@@ -247,8 +255,10 @@ with col1:
                     
                     with venue_preview_col3:
                         if st.button(f"查看詳情", key=f"preview_{idx}"):
-                            st.session_state.selected_venue = venue.to_dict()
-                            st.rerun()
+                            venue_id = venue.get('id')
+                            if venue_id:
+                                st.query_params.id = venue_id
+                                st.switch_page("pages/5_🏢_場地詳情.py")
                     
                     st.divider()
         else:

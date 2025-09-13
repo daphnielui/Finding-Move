@@ -3,6 +3,9 @@ import numpy as np
 import os
 from typing import List, Optional, Dict, Any
 import json
+import psycopg2
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 class DataManager:
     """
@@ -18,65 +21,43 @@ class DataManager:
     
     def _load_data(self):
         """
-        載入場地資料
-        由於要求不使用模擬資料，這裡會嘗試從外部資料源載入
-        如果沒有資料源，會建立空的資料結構
+        從PostgreSQL資料庫載入場地資料
         """
         try:
-            # 嘗試從環境變數或檔案載入資料
-            data_source = os.getenv('VENUES_DATA_SOURCE')
+            # 建立資料庫連接
+            database_url = os.getenv('DATABASE_URL')
+            if not database_url:
+                raise Exception("DATABASE_URL environment variable not found")
             
-            if data_source:
-                # 如果有指定資料源，載入真實資料
-                if data_source.endswith('.json'):
-                    with open(data_source, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        self.venues_data = pd.DataFrame(data)
-                elif data_source.endswith('.csv'):
-                    self.venues_data = pd.read_csv(data_source)
-                else:
-                    # API 端點
-                    import requests
-                    response = requests.get(data_source)
-                    if response.status_code == 200:
-                        data = response.json()
-                        self.venues_data = pd.DataFrame(data)
+            self.engine = create_engine(database_url)
             
-            if self.venues_data is None or self.venues_data.empty:
-                # 建立空的資料結構
-                column_names = [
-                    'id', 'name', 'address', 'district', 'sport_type',
-                    'price_per_hour', 'rating', 'facilities', 'description',
-                    'contact_phone', 'opening_hours', 'website',
-                    'latitude', 'longitude'
-                ]
-                self.venues_data = pd.DataFrame(columns=column_names)
+            # 載入所有場地資料
+            query = """
+            SELECT id, name, address, district, sport_type, price_per_hour, 
+                   rating, facilities, description, contact_phone, opening_hours, 
+                   website, latitude, longitude, photos, created_at, updated_at
+            FROM venues
+            ORDER BY name
+            """
             
-            # 確保必要欄位存在
-            required_columns = [
-                'id', 'name', 'address', 'district', 'sport_type',
-                'price_per_hour', 'rating', 'facilities', 'description',
-                'contact_phone', 'opening_hours', 'website',
-                'latitude', 'longitude'
-            ]
-            
-            for col in required_columns:
-                if col not in self.venues_data.columns:
-                    self.venues_data[col] = None
+            self.venues_data = pd.read_sql(query, self.engine)
             
             # 更新可用選項
             self._update_available_options()
             
+            print(f"成功載入 {len(self.venues_data)} 筆場地資料")
+            
         except Exception as e:
-            print(f"載入資料時發生錯誤: {e}")
+            print(f"載入資料庫資料時發生錯誤: {e}")
             # 建立空的資料結構作為後備
             column_names = [
                 'id', 'name', 'address', 'district', 'sport_type',
                 'price_per_hour', 'rating', 'facilities', 'description',
                 'contact_phone', 'opening_hours', 'website',
-                'latitude', 'longitude'
+                'latitude', 'longitude', 'photos', 'created_at', 'updated_at'
             ]
             self.venues_data = pd.DataFrame(columns=column_names)
+            self.engine = None
             self._update_available_options()
     
     def _update_available_options(self):
@@ -393,3 +374,159 @@ class DataManager:
         except Exception as e:
             print(f"刪除場地時發生錯誤: {e}")
             return False
+    
+    def get_venue_by_id(self, venue_id: int) -> Optional[Dict[str, Any]]:
+        """根據ID獲取場地詳細資訊"""
+        try:
+            if self.engine is None:
+                return None
+            
+            query = """
+            SELECT v.*, 
+                   COALESCE(AVG(r.rating), v.rating) as avg_rating,
+                   COUNT(r.id) as review_count
+            FROM venues v
+            LEFT JOIN reviews r ON v.id = r.venue_id AND r.status = 'approved'
+            WHERE v.id = %s
+            GROUP BY v.id
+            """
+            
+            result = pd.read_sql(query, self.engine, params=[venue_id])
+            
+            if result.empty:
+                return None
+                
+            return result.iloc[0].to_dict()
+            
+        except Exception as e:
+            print(f"獲取場地詳細資訊時發生錯誤: {e}")
+            return None
+    
+    def get_venue_reviews(self, venue_id: int, status: str = 'approved') -> List[Dict[str, Any]]:
+        """獲取場地的評論"""
+        try:
+            if self.engine is None:
+                return []
+            
+            query = """
+            SELECT user_name, rating, comment, created_at
+            FROM reviews
+            WHERE venue_id = %s AND status = %s
+            ORDER BY created_at DESC
+            """
+            
+            result = pd.read_sql(query, self.engine, params=[venue_id, status])
+            return result.to_dict('records')
+            
+        except Exception as e:
+            print(f"獲取場地評論時發生錯誤: {e}")
+            return []
+    
+    def add_review(self, venue_id: int, user_name: str, rating: int, comment: str) -> bool:
+        """添加場地評論"""
+        try:
+            if self.engine is None:
+                return False
+            
+            with self.engine.connect() as conn:
+                query = text("""
+                INSERT INTO reviews (venue_id, user_name, rating, comment, status)
+                VALUES (:venue_id, :user_name, :rating, :comment, 'pending')
+                """)
+                
+                conn.execute(query, {
+                    'venue_id': venue_id,
+                    'user_name': user_name,
+                    'rating': rating,
+                    'comment': comment
+                })
+                conn.commit()
+                
+            return True
+            
+        except Exception as e:
+            print(f"添加評論時發生錯誤: {e}")
+            return False
+    
+    def check_availability(self, venue_id: int, booking_date: str, start_time: str, end_time: str) -> bool:
+        """檢查場地可用性"""
+        try:
+            if self.engine is None:
+                return False
+            
+            query = """
+            SELECT COUNT(*) as booking_count
+            FROM bookings
+            WHERE venue_id = %s 
+              AND booking_date = %s
+              AND status IN ('pending', 'confirmed')
+              AND (
+                (start_time <= %s AND end_time > %s) OR
+                (start_time < %s AND end_time >= %s) OR
+                (start_time >= %s AND end_time <= %s)
+              )
+            """
+            
+            result = pd.read_sql(query, self.engine, params=[
+                venue_id, booking_date, start_time, start_time,
+                end_time, end_time, start_time, end_time
+            ])
+            
+            return result.iloc[0]['booking_count'] == 0
+            
+        except Exception as e:
+            print(f"檢查場地可用性時發生錯誤: {e}")
+            return False
+    
+    def create_booking(self, venue_id: int, user_name: str, user_email: str, user_phone: str,
+                      booking_date: str, start_time: str, end_time: str, 
+                      special_requests: str = None) -> Optional[int]:
+        """創建場地預訂"""
+        try:
+            if self.engine is None:
+                return None
+            
+            # 首先檢查可用性
+            if not self.check_availability(venue_id, booking_date, start_time, end_time):
+                return None
+            
+            # 計算總價格
+            venue_info = self.get_venue_by_id(venue_id)
+            if not venue_info:
+                return None
+            
+            # 簡單計算小時數和總價
+            from datetime import datetime
+            start = datetime.strptime(start_time, '%H:%M')
+            end = datetime.strptime(end_time, '%H:%M')
+            hours = (end - start).seconds / 3600
+            total_price = hours * float(venue_info['price_per_hour'])
+            
+            with self.engine.connect() as conn:
+                query = text("""
+                INSERT INTO bookings (venue_id, user_name, user_email, user_phone,
+                                    booking_date, start_time, end_time, total_price, special_requests)
+                VALUES (:venue_id, :user_name, :user_email, :user_phone,
+                        :booking_date, :start_time, :end_time, :total_price, :special_requests)
+                RETURNING id
+                """)
+                
+                result = conn.execute(query, {
+                    'venue_id': venue_id,
+                    'user_name': user_name,
+                    'user_email': user_email,
+                    'user_phone': user_phone,
+                    'booking_date': booking_date,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'total_price': total_price,
+                    'special_requests': special_requests
+                })
+                conn.commit()
+                
+                booking_id = result.fetchone()[0]
+                return booking_id
+                
+        except Exception as e:
+            print(f"創建預訂時發生錯誤: {e}")
+            return None
