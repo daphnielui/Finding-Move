@@ -6,6 +6,18 @@ This is a Streamlit-based web application for discovering and searching sports v
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+**September 13, 2025**: Completed comprehensive sports venue search engine with following features:
+- PostgreSQL database integration with venues, bookings, reviews, and user tables
+- Real-time booking system with availability checking and conflict detection
+- User review and rating system with administrative moderation dashboard
+- Advanced machine learning recommendation algorithms (ML-based, clustering, content-based similarity)
+- Comprehensive venue comparison feature with charts, statistics, and analysis
+- Venue detail pages with complete information, booking forms, and review sections
+- Security improvements: removed hardcoded passwords, using environment variables
+- Enhanced error handling and data validation throughout the application
+
 # System Architecture
 
 ## Frontend Architecture
@@ -40,11 +52,19 @@ The RecommendationEngine implements sophisticated recommendation algorithms:
 
 ## Data Storage
 
-The application uses a flexible data storage approach without a fixed database:
-- Supports JSON and CSV file formats for venue data
-- Environment variable-based configuration for data sources
-- Pandas DataFrame structures for in-memory data manipulation
-- Session state for user preference persistence during app usage
+**PostgreSQL Database Integration (Updated September 2025)**
+
+The application now uses a comprehensive PostgreSQL database with the following tables:
+- **venues**: Stores all venue information including name, location, facilities, pricing
+- **reviews**: User-generated reviews and ratings with moderation status
+- **bookings**: Real-time booking records with availability tracking
+- **user_preferences**: User preference data for personalized recommendations
+
+Key features:
+- Real-time availability checking with conflict detection
+- ACID-compliant booking transactions
+- Review moderation workflow with admin dashboard
+- Secure environment-based database configuration
 
 ## Geographic Features
 

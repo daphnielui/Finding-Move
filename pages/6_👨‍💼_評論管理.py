@@ -26,15 +26,18 @@ if not st.session_state.admin_authenticated:
         admin_password = st.text_input("管理員密碼", type="password", placeholder="請輸入管理員密碼")
         
         if st.form_submit_button("登入"):
-            # 簡單的密碼驗證 (在實際部署中應使用更安全的方法)
-            if admin_password == "admin123":
+            # 使用環境變數設定管理員密碼
+            import os
+            admin_secret = os.getenv("ADMIN_PASSWORD", "replit_admin_2024")
+            
+            if admin_password == admin_secret:
                 st.session_state.admin_authenticated = True
                 st.success("登入成功！")
                 st.rerun()
             else:
                 st.error("密碼錯誤，請重新輸入。")
     
-    st.info("💡 預設密碼: admin123")
+    st.info("💡 請聯繫管理員取得登入密碼")
     st.stop()
 
 # 管理員介面

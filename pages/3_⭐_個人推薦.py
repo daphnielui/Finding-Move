@@ -37,7 +37,7 @@ with st.sidebar:
     # 推薦類型選擇
     recommendation_type = st.selectbox(
         "推薦類型",
-        ["個人化推薦", "熱門場地", "新場地", "相似用戶推薦", "基於評分推薦"],
+        ["個人化推薦", "機器學習推薦", "聚類分析推薦", "內容相似推薦", "熱門場地", "新場地", "相似用戶推薦", "基於評分推薦"],
         key="rec_type"
     )
     
@@ -86,6 +86,21 @@ with tab1:
             st.session_state.user_preferences,
             num_recommendations=num_recommendations,
             diversity_weight=diversity_weight
+        )
+    elif recommendation_type == "機器學習推薦":
+        recommendations = st.session_state.recommendation_engine.get_ml_based_recommendations(
+            st.session_state.user_preferences,
+            num_recommendations=num_recommendations
+        )
+    elif recommendation_type == "聚類分析推薦":
+        recommendations = st.session_state.recommendation_engine.get_cluster_based_recommendations(
+            st.session_state.user_preferences,
+            num_recommendations=num_recommendations
+        )
+    elif recommendation_type == "內容相似推薦":
+        recommendations = st.session_state.recommendation_engine.get_content_based_ml_recommendations(
+            st.session_state.user_preferences,
+            num_recommendations=num_recommendations
         )
     elif recommendation_type == "熱門場地":
         recommendations = st.session_state.recommendation_engine.get_trending_venues(

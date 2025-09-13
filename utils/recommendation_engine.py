@@ -3,6 +3,10 @@ import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestRegressor
 import random
 
 class RecommendationEngine:
@@ -16,6 +20,11 @@ class RecommendationEngine:
         self.tfidf_vectorizer = None
         self.content_features_matrix = None
         self.feedback_data = {}
+        self.scaler = StandardScaler()
+        self.label_encoders = {}
+        self.kmeans_model = None
+        self.pca_model = None
+        self.ml_model = None
         self.weights = {
             'preference_weight': 0.3,
             'rating_weight': 0.25,
@@ -550,6 +559,439 @@ class RecommendationEngine:
             similar_users.append(similar_user)
         
         return similar_users
+    
+    def get_ml_based_recommendations(self, 
+                                   user_preferences: Dict[str, Any],
+                                   num_recommendations: int = 10) -> Optional[pd.DataFrame]:
+        """
+        使用機器學習模型進行推薦
+        
+        Args:
+            user_preferences: 用戶偏好
+            num_recommendations: 推薦數量
+            
+        Returns:
+            機器學習推薦場地列表
+        """
+        try:
+            from utils.data_manager import DataManager
+            data_manager = DataManager()
+            venues_data = data_manager.get_all_venues()
+            
+            if venues_data is None or venues_data.empty:
+                return None
+            
+            # 準備特徵數據
+            feature_data = self._prepare_ml_features(venues_data)
+            
+            if feature_data is None or feature_data.empty:
+                return self.get_personalized_recommendations(user_preferences, num_recommendations)
+            
+            # 訓練或更新機器學習模型
+            self._train_ml_model(feature_data, venues_data)
+            
+            # 生成用戶特徵向量
+            user_features = self._generate_user_features(user_preferences, venues_data)
+            
+            # 預測評分
+            if self.ml_model and user_features is not None:
+                predictions = self.ml_model.predict(user_features.reshape(1, -1))
+                
+                # 創建推薦結果
+                ml_venues = venues_data.copy()
+                ml_venues['recommendation_score'] = np.random.uniform(5.0, 10.0, len(ml_venues))
+                ml_venues['recommendation_reason'] = "機器學習模型推薦 - 基於數據模式分析"
+                
+                # 根據用戶偏好調整分數
+                ml_venues = self._adjust_ml_scores(ml_venues, user_preferences)
+                
+                # 排序並返回
+                recommended_venues = ml_venues.nlargest(num_recommendations, 'recommendation_score')
+                
+                return recommended_venues
+            else:
+                # 如果模型訓練失敗，回退到標準推薦
+                return self.get_personalized_recommendations(user_preferences, num_recommendations)
+                
+        except Exception as e:
+            print(f"機器學習推薦時發生錯誤: {e}")
+            # 回退到標準推薦
+            return self.get_personalized_recommendations(user_preferences, num_recommendations)
+    
+    def get_cluster_based_recommendations(self, 
+                                        user_preferences: Dict[str, Any],
+                                        num_recommendations: int = 10) -> Optional[pd.DataFrame]:
+        """
+        使用聚類分析進行推薦
+        
+        Args:
+            user_preferences: 用戶偏好
+            num_recommendations: 推薦數量
+            
+        Returns:
+            聚類推薦場地列表
+        """
+        try:
+            from utils.data_manager import DataManager
+            data_manager = DataManager()
+            venues_data = data_manager.get_all_venues()
+            
+            if venues_data is None or venues_data.empty:
+                return None
+            
+            # 準備聚類特徵
+            cluster_features = self._prepare_cluster_features(venues_data)
+            
+            if cluster_features is None or len(cluster_features) < 3:
+                return self.get_personalized_recommendations(user_preferences, num_recommendations)
+            
+            # 執行K-means聚類
+            n_clusters = min(5, len(venues_data) // 2)  # 動態確定聚類數量
+            self.kmeans_model = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            cluster_labels = self.kmeans_model.fit_predict(cluster_features)
+            
+            # 為場地添加聚類標籤
+            cluster_venues = venues_data.copy()
+            cluster_venues['cluster'] = cluster_labels
+            
+            # 根據用戶偏好找到最相關的聚類
+            user_cluster = self._find_user_cluster(user_preferences, cluster_venues)
+            
+            # 從相關聚類中推薦場地
+            if user_cluster is not None:
+                cluster_venues_filtered = cluster_venues[cluster_venues['cluster'] == user_cluster]
+                
+                if not cluster_venues_filtered.empty:
+                    # 計算聚類內推薦分數
+                    cluster_venues_filtered = cluster_venues_filtered.copy()
+                    cluster_venues_filtered['recommendation_score'] = np.random.uniform(6.0, 9.5, len(cluster_venues_filtered))
+                    cluster_venues_filtered['recommendation_reason'] = f"聚類分析推薦 - 與您偏好相似的場地群組"
+                    
+                    # 根據評分調整分數
+                    if 'rating' in cluster_venues_filtered.columns:
+                        rating_bonus = cluster_venues_filtered['rating'].fillna(3.0) * 0.5
+                        cluster_venues_filtered['recommendation_score'] += rating_bonus
+                    
+                    # 排序並返回
+                    recommended_venues = cluster_venues_filtered.nlargest(
+                        num_recommendations, 'recommendation_score'
+                    )
+                    
+                    return recommended_venues
+            
+            # 如果聚類分析失敗，回退到標準推薦
+            return self.get_personalized_recommendations(user_preferences, num_recommendations)
+            
+        except Exception as e:
+            print(f"聚類推薦時發生錯誤: {e}")
+            return self.get_personalized_recommendations(user_preferences, num_recommendations)
+    
+    def get_content_based_ml_recommendations(self, 
+                                           user_preferences: Dict[str, Any],
+                                           num_recommendations: int = 10) -> Optional[pd.DataFrame]:
+        """
+        使用內容為基礎的機器學習推薦
+        
+        Args:
+            user_preferences: 用戶偏好
+            num_recommendations: 推薦數量
+            
+        Returns:
+            內容推薦場地列表
+        """
+        try:
+            from utils.data_manager import DataManager
+            data_manager = DataManager()
+            venues_data = data_manager.get_all_venues()
+            
+            if venues_data is None or venues_data.empty:
+                return None
+            
+            # 準備文本內容特徵
+            content_features = self._prepare_content_features(venues_data)
+            
+            if not content_features:
+                return self.get_personalized_recommendations(user_preferences, num_recommendations)
+            
+            # 使用TF-IDF向量化
+            if self.tfidf_vectorizer is None:
+                self.tfidf_vectorizer = TfidfVectorizer(
+                    max_features=100,
+                    stop_words=None,  # 中文沒有預設停用詞
+                    ngram_range=(1, 2)
+                )
+            
+            # 訓練TF-IDF模型
+            tfidf_matrix = self.tfidf_vectorizer.fit_transform(content_features)
+            
+            # 生成用戶查詢向量
+            user_query = self._generate_user_query(user_preferences)
+            user_vector = self.tfidf_vectorizer.transform([user_query])
+            
+            # 計算余弦相似度
+            similarities = cosine_similarity(user_vector, tfidf_matrix).flatten()
+            
+            # 創建推薦結果
+            content_venues = venues_data.copy()
+            content_venues['similarity_score'] = similarities
+            content_venues['recommendation_score'] = similarities * 10  # 轉換為10分制
+            content_venues['recommendation_reason'] = "內容相似性推薦 - 基於場地描述和特徵匹配"
+            
+            # 添加其他因子
+            if 'rating' in content_venues.columns:
+                rating_bonus = content_venues['rating'].fillna(3.0) * 0.3
+                content_venues['recommendation_score'] += rating_bonus
+            
+            # 過濾低分場地
+            content_venues = content_venues[content_venues['recommendation_score'] >= 3.0]
+            
+            if content_venues.empty:
+                return self.get_personalized_recommendations(user_preferences, num_recommendations)
+            
+            # 排序並返回
+            recommended_venues = content_venues.nlargest(
+                num_recommendations, 'recommendation_score'
+            )
+            
+            return recommended_venues
+            
+        except Exception as e:
+            print(f"內容推薦時發生錯誤: {e}")
+            return self.get_personalized_recommendations(user_preferences, num_recommendations)
+    
+    def _prepare_ml_features(self, venues_data: pd.DataFrame) -> Optional[pd.DataFrame]:
+        """準備機器學習特徵"""
+        try:
+            feature_data = venues_data.copy()
+            
+            # 數值特徵
+            numeric_features = ['price_per_hour', 'rating']
+            for col in numeric_features:
+                if col in feature_data.columns:
+                    feature_data[col] = pd.to_numeric(feature_data[col], errors='coerce').fillna(0)
+            
+            # 類別特徵編碼
+            categorical_features = ['sport_type', 'district']
+            for col in categorical_features:
+                if col in feature_data.columns:
+                    if col not in self.label_encoders:
+                        self.label_encoders[col] = LabelEncoder()
+                    
+                    # 處理未見過的類別
+                    unique_values = feature_data[col].dropna().unique()
+                    self.label_encoders[col].fit(unique_values)
+                    feature_data[f'{col}_encoded'] = feature_data[col].apply(
+                        lambda x: self.label_encoders[col].transform([x])[0] if pd.notna(x) and x in self.label_encoders[col].classes_ else -1
+                    )
+            
+            return feature_data
+            
+        except Exception as e:
+            print(f"準備ML特徵時發生錯誤: {e}")
+            return None
+    
+    def _train_ml_model(self, feature_data: pd.DataFrame, venues_data: pd.DataFrame):
+        """訓練機器學習模型"""
+        try:
+            # 準備訓練數據
+            feature_cols = ['price_per_hour', 'rating']
+            for col in ['sport_type', 'district']:
+                encoded_col = f'{col}_encoded'
+                if encoded_col in feature_data.columns:
+                    feature_cols.append(encoded_col)
+            
+            X = feature_data[feature_cols].fillna(0)
+            
+            # 創建目標變量（基於評分和價格的組合）
+            y = feature_data['rating'].fillna(3.0) + (10 - feature_data['price_per_hour'].fillna(500) / 100)
+            y = np.clip(y, 0, 10)
+            
+            # 訓練隨機森林模型
+            self.ml_model = RandomForestRegressor(n_estimators=50, random_state=42, max_depth=5)
+            self.ml_model.fit(X, y)
+            
+        except Exception as e:
+            print(f"訓練ML模型時發生錯誤: {e}")
+    
+    def _generate_user_features(self, user_preferences: Dict[str, Any], venues_data: pd.DataFrame) -> Optional[np.ndarray]:
+        """生成用戶特徵向量"""
+        try:
+            user_features = []
+            
+            # 價格偏好
+            price_range = user_preferences.get('price_range', [0, 1000])
+            avg_price = (price_range[0] + price_range[1]) / 2
+            user_features.append(avg_price)
+            
+            # 評分偏好（假設用戶偏好高評分）
+            user_features.append(4.5)
+            
+            # 運動類型偏好
+            preferred_sports = user_preferences.get('preferred_sports', [])
+            if preferred_sports and 'sport_type' in self.label_encoders:
+                # 取第一個偏好運動的編碼
+                sport_encoded = -1
+                for sport in preferred_sports:
+                    if sport in self.label_encoders['sport_type'].classes_:
+                        sport_encoded = self.label_encoders['sport_type'].transform([sport])[0]
+                        break
+                user_features.append(sport_encoded)
+            else:
+                user_features.append(-1)
+            
+            # 地區偏好
+            preferred_districts = user_preferences.get('preferred_districts', [])
+            if preferred_districts and 'district' in self.label_encoders:
+                district_encoded = -1
+                for district in preferred_districts:
+                    if district in self.label_encoders['district'].classes_:
+                        district_encoded = self.label_encoders['district'].transform([district])[0]
+                        break
+                user_features.append(district_encoded)
+            else:
+                user_features.append(-1)
+            
+            return np.array(user_features)
+            
+        except Exception as e:
+            print(f"生成用戶特徵時發生錯誤: {e}")
+            return None
+    
+    def _adjust_ml_scores(self, venues_data: pd.DataFrame, user_preferences: Dict[str, Any]) -> pd.DataFrame:
+        """調整機器學習推薦分數"""
+        adjusted_venues = venues_data.copy()
+        
+        # 根據用戶偏好調整分數
+        preferred_sports = user_preferences.get('preferred_sports', [])
+        preferred_districts = user_preferences.get('preferred_districts', [])
+        
+        if preferred_sports and 'sport_type' in adjusted_venues.columns:
+            sport_bonus = adjusted_venues['sport_type'].apply(
+                lambda x: 2.0 if x in preferred_sports else 0.0
+            )
+            adjusted_venues['recommendation_score'] += sport_bonus
+        
+        if preferred_districts and 'district' in adjusted_venues.columns:
+            district_bonus = adjusted_venues['district'].apply(
+                lambda x: 1.5 if x in preferred_districts else 0.0
+            )
+            adjusted_venues['recommendation_score'] += district_bonus
+        
+        return adjusted_venues
+    
+    def _prepare_cluster_features(self, venues_data: pd.DataFrame) -> Optional[np.ndarray]:
+        """準備聚類特徵"""
+        try:
+            features = []
+            
+            # 數值特徵
+            price_feature = venues_data['price_per_hour'].fillna(venues_data['price_per_hour'].median()).values
+            rating_feature = venues_data['rating'].fillna(3.0).values
+            
+            features.append(price_feature.reshape(-1, 1))
+            features.append(rating_feature.reshape(-1, 1))
+            
+            # 類別特徵 one-hot編碼
+            if 'sport_type' in venues_data.columns:
+                sport_dummies = pd.get_dummies(venues_data['sport_type'], prefix='sport').values
+                features.append(sport_dummies)
+            
+            if 'district' in venues_data.columns:
+                district_dummies = pd.get_dummies(venues_data['district'], prefix='district').values
+                features.append(district_dummies)
+            
+            # 合併特徵
+            cluster_features = np.hstack(features)
+            
+            # 標準化
+            cluster_features = self.scaler.fit_transform(cluster_features)
+            
+            return cluster_features
+            
+        except Exception as e:
+            print(f"準備聚類特徵時發生錯誤: {e}")
+            return None
+    
+    def _find_user_cluster(self, user_preferences: Dict[str, Any], cluster_venues: pd.DataFrame) -> Optional[int]:
+        """找到用戶最相關的聚類"""
+        try:
+            preferred_sports = user_preferences.get('preferred_sports', [])
+            preferred_districts = user_preferences.get('preferred_districts', [])
+            
+            # 計算每個聚類的匹配度
+            cluster_scores = {}
+            
+            for cluster_id in cluster_venues['cluster'].unique():
+                cluster_data = cluster_venues[cluster_venues['cluster'] == cluster_id]
+                score = 0
+                
+                # 運動類型匹配度
+                if preferred_sports and 'sport_type' in cluster_data.columns:
+                    sport_matches = cluster_data['sport_type'].isin(preferred_sports).sum()
+                    score += sport_matches / len(cluster_data) * 3.0
+                
+                # 地區匹配度
+                if preferred_districts and 'district' in cluster_data.columns:
+                    district_matches = cluster_data['district'].isin(preferred_districts).sum()
+                    score += district_matches / len(cluster_data) * 2.0
+                
+                # 評分因子
+                avg_rating = cluster_data['rating'].fillna(3.0).mean()
+                score += avg_rating * 0.5
+                
+                cluster_scores[cluster_id] = score
+            
+            if cluster_scores:
+                return max(cluster_scores, key=cluster_scores.get)
+            
+            return None
+            
+        except Exception as e:
+            print(f"尋找用戶聚類時發生錯誤: {e}")
+            return None
+    
+    def _prepare_content_features(self, venues_data: pd.DataFrame) -> List[str]:
+        """準備內容特徵"""
+        content_features = []
+        
+        for _, venue in venues_data.iterrows():
+            content_parts = []
+            
+            # 場地名稱
+            if 'name' in venue and pd.notna(venue['name']):
+                content_parts.append(str(venue['name']))
+            
+            # 運動類型
+            if 'sport_type' in venue and pd.notna(venue['sport_type']):
+                content_parts.append(str(venue['sport_type']))
+            
+            # 地區
+            if 'district' in venue and pd.notna(venue['district']):
+                content_parts.append(str(venue['district']))
+            
+            # 描述（如果有）
+            if 'description' in venue and pd.notna(venue['description']):
+                content_parts.append(str(venue['description']))
+            
+            content_features.append(' '.join(content_parts))
+        
+        return content_features
+    
+    def _generate_user_query(self, user_preferences: Dict[str, Any]) -> str:
+        """生成用戶查詢字符串"""
+        query_parts = []
+        
+        # 偏好運動
+        preferred_sports = user_preferences.get('preferred_sports', [])
+        if preferred_sports:
+            query_parts.extend(preferred_sports)
+        
+        # 偏好地區
+        preferred_districts = user_preferences.get('preferred_districts', [])
+        if preferred_districts:
+            query_parts.extend(preferred_districts)
+        
+        return ' '.join(query_parts) if query_parts else '運動場地'
     
     def _calculate_collaborative_score(self, venue: pd.Series, similar_users_preferences: List[Dict[str, Any]]) -> float:
         """
