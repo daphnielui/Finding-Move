@@ -8,6 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+**September 15, 2025**: Successfully implemented top-right location selector with auto-positioning:
+- Added fixed position location selector in top-right corner with gray theme design
+- Integrated all 12 Taipei districts dropdown using Streamlit native selectbox component
+- Implemented HTML5 geolocation API with distance calculation to nearest district
+- Added real-time weather data updates based on selected district
+- Fixed pandas compatibility issues (na_last → na_position in sort_values)
+- Resolved accessibility warnings by adding proper selectbox labels
+- Enhanced URL parameter management for state persistence across page reloads
+- Complete end-to-end testing validation with Playwright
+
 **September 13, 2025**: Completed comprehensive sports venue search engine with following features:
 - PostgreSQL database integration with venues, bookings, reviews, and user tables
 - Real-time booking system with availability checking and conflict detection
