@@ -136,11 +136,11 @@ with col1:
         if filtered_venues is not None and not filtered_venues.empty:
             # 排序
             if sort_option == "評分":
-                filtered_venues = filtered_venues.sort_values('rating', ascending=False, na_last=True)
+                filtered_venues = filtered_venues.sort_values('rating', ascending=False, na_position='last')
             elif sort_option == "價格":
-                filtered_venues = filtered_venues.sort_values('price_per_hour', ascending=True, na_last=True)
+                filtered_venues = filtered_venues.sort_values('price_per_hour', ascending=True, na_position='last')
             elif sort_option == "名稱":
-                filtered_venues = filtered_venues.sort_values('name', ascending=True, na_last=True)
+                filtered_venues = filtered_venues.sort_values('name', ascending=True, na_position='last')
             
             st.success(f"找到 {len(filtered_venues)} 個符合條件的場地")
             

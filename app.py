@@ -231,6 +231,12 @@ if 'weather_manager' not in st.session_state:
 if 'current_sport_icon' not in st.session_state:
     st.session_state.current_sport_icon = 0
 
+if 'selected_district' not in st.session_state:
+    st.session_state.selected_district = '中正區'
+
+if 'user_location' not in st.session_state:
+    st.session_state.user_location = None
+
 # 運動icon列表
 sports_icons = ["🏀", "⚽", "🏸", "🏐", "🎾", "🏊‍♂️", "🏃‍♂️", "🚴‍♂️", "🏋️‍♂️", "🤸‍♂️"]
 
@@ -245,9 +251,224 @@ if current_time - st.session_state.last_icon_update > 3:
 
 current_icon = sports_icons[st.session_state.current_sport_icon]
 
+# 使用Streamlit原生組件創建位置選擇器
+available_districts = ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', 
+                      '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區']
+
+# 讀取當前選擇的區域
+if hasattr(st, 'query_params') and st.query_params.get('district'):
+    current_district = st.query_params.get('district')
+    if current_district in available_districts:
+        st.session_state.selected_district = current_district
+
+# 創建右上角固定的位置選擇器容器
+st.markdown("""
+<style>
+.location-selector-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: linear-gradient(135deg, #636e72, #2d3436);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    min-width: 200px;
+}
+
+.location-title {
+    color: white;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.stSelectbox {
+    margin-bottom: 10px;
+}
+
+.stSelectbox > div > div {
+    background-color: rgba(255,255,255,0.9);
+    border-radius: 8px;
+}
+
+.auto-locate-info {
+    color: white;
+    font-size: 0.8em;
+    text-align: center;
+    margin-top: 8px;
+    opacity: 0.9;
+}
+</style>
+
+<div class="location-selector-container">
+    <div class="location-title">📍 選擇位置</div>
+""", unsafe_allow_html=True)
+
+# 使用columns來控制選擇器寬度
+col1, col2, col3 = st.columns([0.1, 1, 0.1])
+with col2:
+    # 區域選擇下拉選單
+    selected_district = st.selectbox(
+        "選擇行政區",
+        available_districts,
+        index=available_districts.index(st.session_state.selected_district) if st.session_state.selected_district in available_districts else 0,
+        key="district_selector",
+        help="選擇您所在的台北市行政區",
+        label_visibility="hidden"
+    )
+    
+    # 檢查是否有變更
+    if selected_district != st.session_state.selected_district:
+        st.session_state.selected_district = selected_district
+        # 使用query_params來觸發頁面重新載入
+        st.query_params["district"] = selected_district
+        st.rerun()
+
+# 自動定位按鈕和說明
+st.markdown("""
+    <div class="auto-locate-info">
+        💡 提示：可使用瀏覽器定位功能<br>
+        自動選擇最近的行政區
+    </div>
+</div>
+
+<script>
+// 台北市各區的中心座標
+const districtCoordinates = {
+    '松山區': [25.0497, 121.5746],
+    '信義區': [25.0396, 121.5683],
+    '大安區': [25.0329, 121.5354],
+    '中山區': [25.0703, 121.5261],
+    '中正區': [25.0320, 121.5130],
+    '大同區': [25.0630, 121.5134],
+    '萬華區': [25.0338, 121.4977],
+    '文山區': [24.9888, 121.5709],
+    '南港區': [25.0542, 121.6075],
+    '內湖區': [25.0823, 121.5810],
+    '士林區': [25.1037, 121.5258],
+    '北投區': [25.1316, 121.4998]
+};
+
+// 自動定位功能（點擊提示區域觸發）
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.auto-locate-info')) {
+        autoLocate();
+    }
+});
+
+function autoLocate() {
+    if (!navigator.geolocation) {
+        alert('❌ 瀏覽器不支援定位功能');
+        return;
+    }
+    
+    const infoDiv = document.querySelector('.auto-locate-info');
+    const originalText = infoDiv.innerHTML;
+    infoDiv.innerHTML = '🔍 正在定位中...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const userLat = position.coords.latitude;
+            const userLon = position.coords.longitude;
+            
+            // 檢查是否在台北市範圍內
+            if (userLat >= 24.95 && userLat <= 25.20 && 
+                userLon >= 121.45 && userLon <= 121.65) {
+                
+                const nearestDistrict = findNearestDistrict(userLat, userLon);
+                
+                // 更新URL參數並重新載入
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('district', nearestDistrict);
+                
+                infoDiv.innerHTML = '✅ 定位成功，正在更新...';
+                setTimeout(() => {
+                    window.location.href = newUrl.toString();
+                }, 1000);
+            } else {
+                infoDiv.innerHTML = '❌ 您不在台北市範圍內';
+                setTimeout(() => {
+                    infoDiv.innerHTML = originalText;
+                }, 3000);
+            }
+        },
+        function(error) {
+            let errorMsg = '❌ 定位失敗';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg = '❌ 請允許定位權限';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg = '❌ 位置資訊不可用';
+                    break;
+                case error.TIMEOUT:
+                    errorMsg = '❌ 定位超時';
+                    break;
+            }
+            infoDiv.innerHTML = errorMsg;
+            setTimeout(() => {
+                infoDiv.innerHTML = originalText;
+            }, 3000);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+
+function findNearestDistrict(userLat, userLon) {
+    let minDistance = Infinity;
+    let nearestDistrict = '中正區';
+    
+    Object.entries(districtCoordinates).forEach(([district, [lat, lon]]) => {
+        const distance = calculateDistance(userLat, userLon, lat, lon);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestDistrict = district;
+        }
+    });
+    
+    return nearestDistrict;
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+</script>
+""", unsafe_allow_html=True)
+
 # ===== 第一區塊：天氣資訊 =====
+# 獲取選擇的區域 - 優先順序：URL參數 > session_state > 預設值
+selected_district = '中正區'  # 預設值
+
+# 讀取 URL 查詢參數
+try:
+    if hasattr(st, 'query_params') and st.query_params:
+        district_param = st.query_params.get('district')
+        if district_param:
+            selected_district = district_param
+            st.session_state.selected_district = district_param
+    elif 'selected_district' in st.session_state:
+        selected_district = st.session_state.selected_district
+except Exception as e:
+    print(f"讀取URL參數時發生錯誤: {e}")
+    # 使用 session_state 中的值作為備選
+    if 'selected_district' in st.session_state:
+        selected_district = st.session_state.selected_district
+
 # 獲取即時天氣資料
-weather_info = st.session_state.weather_manager.get_current_weather('中正區')
+weather_info = st.session_state.weather_manager.get_current_weather(selected_district)
 weather_icon = st.session_state.weather_manager.get_weather_icon(
     weather_info['weather_description'], 
     weather_info['temperature']
