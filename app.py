@@ -178,13 +178,13 @@ st.markdown("""
         top: 66.67vh;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 1.75em;
+        font-size: 1em;
         font-weight: normal;
         text-align: center;
         opacity: 0.9;
         animation: titleSlideUp 2.5s ease-out 1.2s both;
         white-space: nowrap;
-        font-family: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
+        font-family: 'uoqmunthenkhung', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
         letter-spacing: 2px;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
