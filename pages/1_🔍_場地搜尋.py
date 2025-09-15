@@ -4,7 +4,7 @@ from utils.data_manager import DataManager
 from utils.recommendation_engine import RecommendationEngine
 
 st.set_page_config(
-    page_title="場地搜尋 - 台北運動場地搜尋引擎",
+    page_title="Finding Move 尋地寳 ",
     page_icon="🔍",
     layout="wide"
 )
