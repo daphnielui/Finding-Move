@@ -2,14 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 from typing import List, Optional, Dict, Any
-import json
-import psycopg2
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
+import random
 
 class DataManager:
     """
     資料管理類別，負責處理場地資料的載入、篩選和搜尋功能
+    從CSV檔案讀取台北運動場地資料
     """
     
     def __init__(self):
@@ -21,26 +19,58 @@ class DataManager:
     
     def _load_data(self):
         """
-        從PostgreSQL資料庫載入場地資料
+        從CSV檔案載入場地資料
         """
         try:
-            # 建立資料庫連接
-            database_url = os.getenv('DATABASE_URL')
-            if not database_url:
-                raise Exception("DATABASE_URL environment variable not found")
+            # 讀取CSV檔案
+            csv_path = "attached_assets/finding move - main (1)_1757915289189.csv"
             
-            self.engine = create_engine(database_url)
+            if not os.path.exists(csv_path):
+                print(f"CSV檔案不存在: {csv_path}")
+                self._create_empty_dataframe()
+                return
             
-            # 載入所有場地資料
-            query = """
-            SELECT id, name, address, district, sport_type, price_per_hour, 
-                   rating, facilities, description, contact_phone, opening_hours, 
-                   website, latitude, longitude, photos, created_at, updated_at
-            FROM venues
-            ORDER BY name
-            """
+            # 讀取CSV，跳過前面的標題行
+            raw_data = pd.read_csv(csv_path, encoding='utf-8', skiprows=5)
             
-            self.venues_data = pd.read_sql(query, self.engine)
+            # 清理欄位名稱
+            raw_data.columns = [
+                'name', 'district', 'price_range', 'sport_type', 'opening_hours',
+                'facilities', 'venue_scale', 'courses', 'other', 'website',
+                'address', 'contact_phone', 'photos'
+            ]
+            
+            # 過濾掉空的場地名稱
+            raw_data = raw_data.dropna(subset=['name'])
+            raw_data = raw_data[raw_data['name'].str.strip() != '']
+            
+            # 建立標準化的資料結構
+            venues_list = []
+            
+            for idx, row in raw_data.iterrows():
+                venue = {
+                    'id': idx + 1,
+                    'name': str(row['name']).strip() if pd.notna(row['name']) else '',
+                    'district': str(row['district']).strip() if pd.notna(row['district']) else '',
+                    'address': str(row['address']).strip() if pd.notna(row['address']) else '',
+                    'sport_type': self._normalize_sport_type(row['sport_type']),
+                    'price_per_hour': self._extract_price(row['price_range']),
+                    'rating': round(random.uniform(3.5, 5.0), 1),  # 模擬評分
+                    'facilities': self._normalize_facilities(row['facilities']),
+                    'description': str(row['other']).strip() if pd.notna(row['other']) else '',
+                    'contact_phone': str(row['contact_phone']).strip() if pd.notna(row['contact_phone']) else '',
+                    'opening_hours': str(row['opening_hours']).strip() if pd.notna(row['opening_hours']) else '',
+                    'website': str(row['website']).strip() if pd.notna(row['website']) else '',
+                    'venue_scale': str(row['venue_scale']).strip() if pd.notna(row['venue_scale']) else '',
+                    'courses': str(row['courses']).strip() if pd.notna(row['courses']) else '',
+                    'photos': str(row['photos']).strip() if pd.notna(row['photos']) else '',
+                    'latitude': self._get_district_coordinates(row['district'])[0],
+                    'longitude': self._get_district_coordinates(row['district'])[1]
+                }
+                venues_list.append(venue)
+            
+            # 轉換為DataFrame
+            self.venues_data = pd.DataFrame(venues_list)
             
             # 更新可用選項
             self._update_available_options()
@@ -48,43 +78,148 @@ class DataManager:
             print(f"成功載入 {len(self.venues_data)} 筆場地資料")
             
         except Exception as e:
-            print(f"載入資料庫資料時發生錯誤: {e}")
-            # 建立空的資料結構作為後備
-            column_names = [
-                'id', 'name', 'address', 'district', 'sport_type',
-                'price_per_hour', 'rating', 'facilities', 'description',
-                'contact_phone', 'opening_hours', 'website',
-                'latitude', 'longitude', 'photos', 'created_at', 'updated_at'
-            ]
-            self.venues_data = pd.DataFrame(columns=column_names)
-            self.engine = None
-            self._update_available_options()
+            print(f"載入CSV資料時發生錯誤: {e}")
+            self._create_empty_dataframe()
+    
+    def _create_empty_dataframe(self):
+        """建立空的DataFrame作為後備"""
+        column_names = [
+            'id', 'name', 'address', 'district', 'sport_type',
+            'price_per_hour', 'rating', 'facilities', 'description',
+            'contact_phone', 'opening_hours', 'website',
+            'latitude', 'longitude', 'venue_scale', 'courses', 'photos'
+        ]
+        self.venues_data = pd.DataFrame(columns=column_names)
+        self._update_available_options()
+    
+    def _normalize_sport_type(self, sport_type):
+        """標準化運動類型"""
+        if pd.isna(sport_type) or sport_type == '':
+            return '綜合運動'
+        
+        sport_type = str(sport_type).strip()
+        
+        # 運動類型對應表
+        sport_mapping = {
+            '羽球': '羽毛球',
+            '羽毛球': '羽毛球',
+            '游泳': '游泳',
+            '健身': '健身',
+            '重訓': '健身',
+            '有氧': '有氧運動',
+            '瑜珈': '瑜伽',
+            '瑜伽': '瑜伽',
+            '球類': '球類運動',
+            '籃球': '籃球',
+            '足球': '足球',
+            '網球': '網球',
+            '桌球': '桌球',
+            '撞球': '撞球',
+            '排球': '排球',
+            '戶外運動': '戶外運動'
+        }
+        
+        # 檢查包含的運動類型
+        for key, value in sport_mapping.items():
+            if key in sport_type:
+                return value
+        
+        # 如果包含多種運動，返回第一個識別到的
+        if '/' in sport_type:
+            types = sport_type.split('/')
+            for t in types:
+                t = t.strip()
+                for key, value in sport_mapping.items():
+                    if key in t:
+                        return value
+        
+        return sport_type if sport_type else '綜合運動'
+    
+    def _extract_price(self, price_range):
+        """從價格區間提取平均價格"""
+        if pd.isna(price_range) or price_range == '':
+            return random.randint(100, 500)  # 預設價格範圍
+        
+        price_str = str(price_range).strip()
+        
+        if '0-200' in price_str:
+            return 150
+        elif '200-500' in price_str:
+            return 350
+        elif '500以上' in price_str:
+            return 700
+        else:
+            return random.randint(200, 400)
+    
+    def _normalize_facilities(self, facilities):
+        """標準化設施資訊"""
+        if pd.isna(facilities) or facilities == '':
+            return '基本設施'
+        
+        facilities_str = str(facilities).strip()
+        
+        # 標準化設施名稱
+        facility_mapping = {
+            '淋浴間': '淋浴間',
+            '置物櫃': '置物櫃',
+            '停車場': '停車場',
+            'Wi-Fi': 'Wi-Fi',
+            'WiFi': 'Wi-Fi',
+            '無障礙設施': '無障礙設施',
+            '性別友善設施': '性別友善設施',
+            '寵物友善': '寵物友善',
+            '女性專用': '女性專用'
+        }
+        
+        normalized_facilities = []
+        for key, value in facility_mapping.items():
+            if key in facilities_str:
+                normalized_facilities.append(value)
+        
+        return '/'.join(normalized_facilities) if normalized_facilities else facilities_str
+    
+    def _get_district_coordinates(self, district):
+        """取得地區的座標 (緯度, 經度)"""
+        district_coords = {
+            '士林區': (25.0881, 121.5256),
+            '大安區': (25.0266, 121.5484),
+            '中山區': (25.0633, 121.5267),
+            '大同區': (25.0633, 121.5154),
+            '中正區': (25.0364, 121.5161),
+            '信義區': (25.0336, 121.5751),
+            '萬華區': (25.0327, 121.5060),
+            '文山區': (24.9906, 121.5420),
+            '松山區': (25.0501, 121.5776),
+            '內湖區': (25.0838, 121.5948),
+            '南港區': (25.0415, 121.6073),
+            '北投區': (25.1372, 121.5018)
+        }
+        
+        return district_coords.get(str(district).strip(), (25.0478, 121.5319))  # 預設台北市中心
     
     def _update_available_options(self):
         """更新可用的運動類型、地區和設施列表"""
         if self.venues_data is not None and not self.venues_data.empty:
             # 運動類型
             if 'sport_type' in self.venues_data.columns:
-                self.sport_types = self.venues_data['sport_type'].dropna().unique().tolist()
+                self.sport_types = sorted(self.venues_data['sport_type'].dropna().unique().tolist())
             
             # 地區
             if 'district' in self.venues_data.columns:
-                self.districts = self.venues_data['district'].dropna().unique().tolist()
+                self.districts = sorted(self.venues_data['district'].dropna().unique().tolist())
             
             # 設施
             if 'facilities' in self.venues_data.columns:
                 all_facilities = []
                 for facilities in self.venues_data['facilities'].dropna():
-                    if isinstance(facilities, str):
-                        all_facilities.extend([f.strip() for f in facilities.split(',')])
-                    elif isinstance(facilities, list):
-                        all_facilities.extend(facilities)
+                    if isinstance(facilities, str) and facilities.strip():
+                        all_facilities.extend([f.strip() for f in facilities.split('/')])
                 
-                self.facilities = list(set(all_facilities))
+                self.facilities = sorted(list(set(all_facilities)))
         else:
-            # 如果沒有資料，提供一些預設選項供篩選器使用
+            # 如果沒有資料，提供一些預設選項
             self.sport_types = [
-                "籃球", "足球", "網球", "羽毛球", "游泳", "健身房", 
+                "籃球", "足球", "網球", "羽毛球", "游泳", "健身", 
                 "跑步", "桌球", "排球", "棒球", "瑜伽", "舞蹈"
             ]
             self.districts = [
@@ -235,16 +370,30 @@ class DataManager:
         if self.venues_data is None or self.venues_data.empty or not venue_ids:
             return None
         
-        # 如果沒有ID欄位，使用name或index作為ID
+        # 使用ID欄位篩選
         if 'id' in self.venues_data.columns:
             filtered_data = self.venues_data[self.venues_data['id'].isin(venue_ids)]
-        elif 'name' in self.venues_data.columns:
-            filtered_data = self.venues_data[self.venues_data['name'].isin(venue_ids)]
         else:
-            # 使用index
-            filtered_data = self.venues_data[self.venues_data.index.isin(venue_ids)]
+            return None
         
         return filtered_data if not filtered_data.empty else None
+    
+    def get_venue_by_id(self, venue_id: int) -> Optional[Dict[str, Any]]:
+        """根據ID獲取場地詳細資訊"""
+        try:
+            if self.venues_data is None or self.venues_data.empty:
+                return None
+            
+            venue_data = self.venues_data[self.venues_data['id'] == venue_id]
+            
+            if venue_data.empty:
+                return None
+                
+            return venue_data.iloc[0].to_dict()
+            
+        except Exception as e:
+            print(f"獲取場地詳細資訊時發生錯誤: {e}")
+            return None
     
     def get_popular_searches(self) -> List[str]:
         """
@@ -253,8 +402,6 @@ class DataManager:
         Returns:
             熱門搜尋關鍵字列表
         """
-        # 這裡可以從實際的搜尋記錄中統計
-        # 暫時返回一些常見的搜尋關鍵字
         popular_searches = []
         
         # 添加運動類型作為熱門搜尋
@@ -270,263 +417,3 @@ class DataManager:
         popular_searches.extend(common_searches)
         
         return popular_searches[:10]  # 返回前10個熱門搜尋
-    
-    def add_venue(self, venue_data: Dict[str, Any]) -> bool:
-        """
-        新增場地資料
-        
-        Args:
-            venue_data: 場地資料字典
-            
-        Returns:
-            是否新增成功
-        """
-        try:
-            if self.venues_data is None:
-                self._load_data()
-            
-            # 生成新的ID
-            if 'id' not in venue_data:
-                venue_data['id'] = len(self.venues_data) + 1
-            
-            # 將新資料轉換為DataFrame並合併
-            new_venue_df = pd.DataFrame([venue_data])
-            self.venues_data = pd.concat([self.venues_data, new_venue_df], ignore_index=True)
-            
-            # 更新可用選項
-            self._update_available_options()
-            
-            return True
-            
-        except Exception as e:
-            print(f"新增場地時發生錯誤: {e}")
-            return False
-    
-    def update_venue(self, venue_id: Any, venue_data: Dict[str, Any]) -> bool:
-        """
-        更新場地資料
-        
-        Args:
-            venue_id: 場地ID
-            venue_data: 更新的場地資料
-            
-        Returns:
-            是否更新成功
-        """
-        try:
-            if self.venues_data is None or self.venues_data.empty:
-                return False
-            
-            # 尋找對應的場地
-            if 'id' in self.venues_data.columns:
-                mask = self.venues_data['id'] == venue_id
-            else:
-                return False
-            
-            if mask.any():
-                # 更新資料
-                for key, value in venue_data.items():
-                    if key in self.venues_data.columns:
-                        self.venues_data.loc[mask, key] = value
-                
-                # 更新可用選項
-                self._update_available_options()
-                
-                return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"更新場地時發生錯誤: {e}")
-            return False
-    
-    def delete_venue(self, venue_id: Any) -> bool:
-        """
-        刪除場地資料
-        
-        Args:
-            venue_id: 場地ID
-            
-        Returns:
-            是否刪除成功
-        """
-        try:
-            if self.venues_data is None or self.venues_data.empty:
-                return False
-            
-            # 尋找對應的場地
-            if 'id' in self.venues_data.columns:
-                mask = self.venues_data['id'] == venue_id
-            else:
-                return False
-            
-            if mask.any():
-                # 刪除資料
-                self.venues_data = self.venues_data[~mask].reset_index(drop=True)
-                
-                # 更新可用選項
-                self._update_available_options()
-                
-                return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"刪除場地時發生錯誤: {e}")
-            return False
-    
-    def get_venue_by_id(self, venue_id: int) -> Optional[Dict[str, Any]]:
-        """根據ID獲取場地詳細資訊"""
-        try:
-            if self.engine is None:
-                return None
-            
-            query = """
-            SELECT v.*, 
-                   COALESCE(AVG(r.rating), v.rating) as avg_rating,
-                   COUNT(r.id) as review_count
-            FROM venues v
-            LEFT JOIN reviews r ON v.id = r.venue_id AND r.status = 'approved'
-            WHERE v.id = %s
-            GROUP BY v.id
-            """
-            
-            result = pd.read_sql(query, self.engine, params=[venue_id])
-            
-            if result.empty:
-                return None
-                
-            return result.iloc[0].to_dict()
-            
-        except Exception as e:
-            print(f"獲取場地詳細資訊時發生錯誤: {e}")
-            return None
-    
-    def get_venue_reviews(self, venue_id: int, status: str = 'approved') -> List[Dict[str, Any]]:
-        """獲取場地的評論"""
-        try:
-            if self.engine is None:
-                return []
-            
-            query = """
-            SELECT user_name, rating, comment, created_at
-            FROM reviews
-            WHERE venue_id = %s AND status = %s
-            ORDER BY created_at DESC
-            """
-            
-            result = pd.read_sql(query, self.engine, params=[venue_id, status])
-            return result.to_dict('records')
-            
-        except Exception as e:
-            print(f"獲取場地評論時發生錯誤: {e}")
-            return []
-    
-    def add_review(self, venue_id: int, user_name: str, rating: int, comment: str) -> bool:
-        """添加場地評論"""
-        try:
-            if self.engine is None:
-                return False
-            
-            with self.engine.connect() as conn:
-                query = text("""
-                INSERT INTO reviews (venue_id, user_name, rating, comment, status)
-                VALUES (:venue_id, :user_name, :rating, :comment, 'pending')
-                """)
-                
-                conn.execute(query, {
-                    'venue_id': venue_id,
-                    'user_name': user_name,
-                    'rating': rating,
-                    'comment': comment
-                })
-                conn.commit()
-                
-            return True
-            
-        except Exception as e:
-            print(f"添加評論時發生錯誤: {e}")
-            return False
-    
-    def check_availability(self, venue_id: int, booking_date: str, start_time: str, end_time: str) -> bool:
-        """檢查場地可用性"""
-        try:
-            if self.engine is None:
-                return False
-            
-            query = """
-            SELECT COUNT(*) as booking_count
-            FROM bookings
-            WHERE venue_id = %s 
-              AND booking_date = %s
-              AND status IN ('pending', 'confirmed')
-              AND (
-                (start_time <= %s AND end_time > %s) OR
-                (start_time < %s AND end_time >= %s) OR
-                (start_time >= %s AND end_time <= %s)
-              )
-            """
-            
-            result = pd.read_sql(query, self.engine, params=[
-                venue_id, booking_date, start_time, start_time,
-                end_time, end_time, start_time, end_time
-            ])
-            
-            return result.iloc[0]['booking_count'] == 0
-            
-        except Exception as e:
-            print(f"檢查場地可用性時發生錯誤: {e}")
-            return False
-    
-    def create_booking(self, venue_id: int, user_name: str, user_email: str, user_phone: str,
-                      booking_date: str, start_time: str, end_time: str, 
-                      special_requests: str = None) -> Optional[int]:
-        """創建場地預訂"""
-        try:
-            if self.engine is None:
-                return None
-            
-            # 首先檢查可用性
-            if not self.check_availability(venue_id, booking_date, start_time, end_time):
-                return None
-            
-            # 計算總價格
-            venue_info = self.get_venue_by_id(venue_id)
-            if not venue_info:
-                return None
-            
-            # 簡單計算小時數和總價
-            from datetime import datetime
-            start = datetime.strptime(start_time, '%H:%M')
-            end = datetime.strptime(end_time, '%H:%M')
-            hours = (end - start).seconds / 3600
-            total_price = hours * float(venue_info['price_per_hour'])
-            
-            with self.engine.connect() as conn:
-                query = text("""
-                INSERT INTO bookings (venue_id, user_name, user_email, user_phone,
-                                    booking_date, start_time, end_time, total_price, special_requests)
-                VALUES (:venue_id, :user_name, :user_email, :user_phone,
-                        :booking_date, :start_time, :end_time, :total_price, :special_requests)
-                RETURNING id
-                """)
-                
-                result = conn.execute(query, {
-                    'venue_id': venue_id,
-                    'user_name': user_name,
-                    'user_email': user_email,
-                    'user_phone': user_phone,
-                    'booking_date': booking_date,
-                    'start_time': start_time,
-                    'end_time': end_time,
-                    'total_price': total_price,
-                    'special_requests': special_requests
-                })
-                conn.commit()
-                
-                booking_id = result.fetchone()[0]
-                return booking_id
-                
-        except Exception as e:
-            print(f"創建預訂時發生錯誤: {e}")
-            return None

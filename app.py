@@ -184,7 +184,7 @@ search_col1, search_col2 = st.columns([4, 1])
 
 with search_col1:
     search_placeholder = f"{current_icon} 輸入場地名稱、運動類型或地區..."
-    search_query = st.text_input("", placeholder=search_placeholder, label_visibility="collapsed")
+    search_query = st.text_input("搜尋", placeholder=search_placeholder, label_visibility="collapsed")
 
 with search_col2:
     search_button = st.button("🔍", help="開始搜尋", use_container_width=True, type="primary")
