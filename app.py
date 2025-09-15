@@ -316,7 +316,7 @@ st.markdown("""
 
 <!-- 應用啟動動畫HTML -->
 <div id="appStartup" class="app-startup-overlay">
-    <img src="attached_assets/fm_1757940508853.gif" alt="啟動動畫" class="startup-logo">
+    <img src="attached_assets/FM logo_1757941352267.jpg" alt="Finding Move Logo" class="startup-logo">
     <div class="startup-title">台北運動場地搜尋引擎</div>
     <div class="startup-subtitle">找到最適合您的運動場地</div>
     <div class="startup-loading">
