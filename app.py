@@ -120,6 +120,130 @@ st.markdown("""
         to { transform: rotate(360deg); }
     }
     
+    /* 應用啟動動畫覆蓋層 */
+    .app-startup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
+        z-index: 99999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: white;
+        font-family: 'Arial', sans-serif;
+    }
+    
+    .app-startup-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+    }
+    
+    /* 啟動logo動畫 */
+    .startup-logo {
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: logoFadeIn 1.5s ease-out;
+    }
+    
+    @keyframes logoFadeIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    /* 啟動標題 */
+    .startup-title {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-align: center;
+        animation: titleSlideUp 1.8s ease-out 0.3s both;
+    }
+    
+    .startup-subtitle {
+        font-size: 1.2em;
+        opacity: 0.9;
+        margin-bottom: 40px;
+        text-align: center;
+        animation: titleSlideUp 2s ease-out 0.6s both;
+    }
+    
+    @keyframes titleSlideUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* 載入進度動畫 */
+    .startup-loading {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        animation: loadingFadeIn 2.2s ease-out 0.9s both;
+    }
+    
+    .loading-text {
+        font-size: 1.1em;
+        margin-right: 10px;
+    }
+    
+    .loading-dots {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .loading-dot {
+        width: 8px;
+        height: 8px;
+        background-color: white;
+        border-radius: 50%;
+        animation: dotPulse 1.4s ease-in-out infinite;
+    }
+    
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes dotPulse {
+        0%, 60%, 100% {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+        30% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    @keyframes loadingFadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
     /* 轉場動畫覆蓋層 */
     .page-transition-overlay {
         display: none;
@@ -153,20 +277,6 @@ st.markdown("""
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-    }
-    
-    /* 載入文字 */
-    .loading-text {
-        color: #424242;
-        font-size: 18px;
-        font-weight: bold;
-        text-align: center;
-        animation: pulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
     }
     
     /* 輸入欄樣式 */
@@ -203,6 +313,21 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 </style>
+
+<!-- 應用啟動動畫HTML -->
+<div id="appStartup" class="app-startup-overlay">
+    <img src="attached_assets/fm_1757940508853.gif" alt="啟動動畫" class="startup-logo">
+    <div class="startup-title">台北運動場地搜尋引擎</div>
+    <div class="startup-subtitle">找到最適合您的運動場地</div>
+    <div class="startup-loading">
+        <span class="loading-text">載入中</span>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+</div>
 
 <!-- 轉場動畫HTML -->
 <div id="pageTransition" class="page-transition-overlay">
@@ -246,6 +371,42 @@ window.addEventListener('load', function() {
         overlay.classList.remove('show');
     }
 });
+
+// 應用啟動動畫控制
+(function() {
+    const startupOverlay = document.getElementById('appStartup');
+    
+    // 確保啟動動畫在頁面載入時顯示
+    if (startupOverlay) {
+        // 檢查是否是第一次載入或從其他頁面返回
+        const isFirstLoad = !sessionStorage.getItem('appLoaded');
+        
+        if (isFirstLoad) {
+            // 第一次載入，顯示完整啟動動畫
+            startupOverlay.style.display = 'flex';
+            
+            // 3.5秒後隱藏啟動動畫
+            setTimeout(function() {
+                startupOverlay.classList.add('hidden');
+                // 動畫結束後設置已載入標記
+                setTimeout(function() {
+                    sessionStorage.setItem('appLoaded', 'true');
+                }, 800); // 等待fade out動畫完成
+            }, 3500);
+        } else {
+            // 非第一次載入，立即隱藏啟動動畫
+            startupOverlay.style.display = 'none';
+        }
+    }
+    
+    // 監聽頁面重新載入事件
+    window.addEventListener('beforeunload', function() {
+        // 如果是完全重新載入頁面，清除已載入標記
+        if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+            sessionStorage.removeItem('appLoaded');
+        }
+    });
+})();
 </script>
 """, unsafe_allow_html=True)
 
