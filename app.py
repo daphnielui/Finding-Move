@@ -4,6 +4,7 @@ import time
 import random
 from utils.data_manager import DataManager
 from utils.recommendation_engine import RecommendationEngine
+from utils.weather_manager import WeatherManager
 import os
 
 # 設定頁面配置
@@ -224,6 +225,9 @@ if 'data_manager' not in st.session_state:
 if 'recommendation_engine' not in st.session_state:
     st.session_state.recommendation_engine = RecommendationEngine()
 
+if 'weather_manager' not in st.session_state:
+    st.session_state.weather_manager = WeatherManager()
+
 if 'current_sport_icon' not in st.session_state:
     st.session_state.current_sport_icon = 0
 
@@ -242,28 +246,57 @@ if current_time - st.session_state.last_icon_update > 3:
 current_icon = sports_icons[st.session_state.current_sport_icon]
 
 # ===== 第一區塊：天氣資訊 =====
-st.markdown("""
+# 獲取即時天氣資料
+weather_info = st.session_state.weather_manager.get_current_weather('中正區')
+weather_icon = st.session_state.weather_manager.get_weather_icon(
+    weather_info['weather_description'], 
+    weather_info['temperature']
+)
+
+# 根據運動適宜性給出建議
+def get_exercise_advice(temp, humidity, precipitation):
+    if precipitation > 60:
+        return "🌧️ 今日有雨，建議室內運動"
+    elif temp > 35:
+        return "🌡️ 高溫警告，請注意防曬補水"
+    elif temp < 15:
+        return "🧥 氣溫較低，請注意保暖"
+    elif humidity > 80:
+        return "💦 濕度較高，運動時多補水"
+    else:
+        return "☀️ 今日適合戶外運動"
+
+exercise_advice = get_exercise_advice(
+    weather_info['temperature'], 
+    weather_info['humidity'], 
+    weather_info['precipitation_probability']
+)
+
+st.markdown(f"""
 <div class="weather-block">
-    <h2>🌤️ 台北市天氣資訊</h2>
+    <h2>🌤️ 台北市即時天氣</h2>
     <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
         <div>
-            <div style="font-size: 3em;">☀️</div>
-            <div style="font-size: 1.5em; font-weight: bold;">25°C</div>
-            <div>晴朗</div>
+            <div style="font-size: 3em;">{weather_icon}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">{weather_info['temperature']}°C</div>
+            <div>{weather_info['weather_description']}</div>
         </div>
         <div>
             <div style="font-size: 2em;">💨</div>
-            <div>東北風 3級</div>
-            <div>濕度 65%</div>
+            <div>{weather_info['wind_direction']} {weather_info['wind_speed']}級</div>
+            <div>濕度 {weather_info['humidity']}%</div>
         </div>
         <div>
             <div style="font-size: 2em;">📍</div>
             <div style="font-weight: bold;">台北市</div>
-            <div>中正區</div>
+            <div>{weather_info['district']}</div>
         </div>
     </div>
     <div style="margin-top: 15px; font-size: 0.9em;">
-        ☀️ 今日適合戶外運動 | 🌡️ 體感溫度 27°C | 🌧️ 降雨機率 10%
+        {exercise_advice} | 🌡️ 體感溫度 {weather_info['apparent_temperature']}°C | 🌧️ 降雨機率 {weather_info['precipitation_probability']}%
+    </div>
+    <div style="margin-top: 10px; font-size: 0.8em; opacity: 0.8;">
+        更新時間: {weather_info['update_time']} | 舒適度: {weather_info['comfort_index']}
     </div>
 </div>
 """, unsafe_allow_html=True)
