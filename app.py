@@ -88,6 +88,55 @@ st.markdown("""
         to { transform: rotate(360deg); }
     }
     
+    /* 轉場動畫覆蓋層 */
+    .page-transition-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(245, 245, 245, 0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    
+    .page-transition-overlay.show {
+        display: flex;
+    }
+    
+    /* 載入動畫 */
+    .loading-spinner {
+        width: 80px;
+        height: 80px;
+        border: 8px solid #e8e8e8;
+        border-top: 8px solid #9e9e9e;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* 載入文字 */
+    .loading-text {
+        color: #424242;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
     /* 輸入欄樣式 */
     .stTextInput > div > div > input {
         background-color: #f0f0f0;
@@ -111,7 +160,61 @@ st.markdown("""
     h1, h2, h3 {
         color: #424242;
     }
+    
+    /* 按鈕點擊效果 */
+    .stButton > button {
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
 </style>
+
+<!-- 轉場動畫HTML -->
+<div id="pageTransition" class="page-transition-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">載入中...</div>
+</div>
+
+<script>
+// 頁面轉場動畫功能
+function showPageTransition() {
+    const overlay = document.getElementById('pageTransition');
+    if (overlay) {
+        overlay.classList.add('show');
+        
+        // 2秒後隱藏動畫 (Streamlit通常需要這個時間來載入新頁面)
+        setTimeout(function() {
+            overlay.classList.remove('show');
+        }, 2000);
+    }
+}
+
+// 監聽所有按鈕點擊事件
+document.addEventListener('click', function(e) {
+    // 檢查點擊的是否為導航按鈕
+    const button = e.target.closest('button');
+    if (button && (
+        button.textContent.includes('場地搜尋') ||
+        button.textContent.includes('地圖檢視') ||
+        button.textContent.includes('個人推薦') ||
+        button.textContent.includes('場地比較') ||
+        button.textContent.includes('查看詳情')
+    )) {
+        showPageTransition();
+    }
+});
+
+// 頁面載入完成後隱藏轉場動畫
+window.addEventListener('load', function() {
+    const overlay = document.getElementById('pageTransition');
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
+});
+</script>
 """, unsafe_allow_html=True)
 
 # 初始化 session state
