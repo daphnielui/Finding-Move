@@ -449,22 +449,9 @@ window.addEventListener('load', function() {
         // 檢查是否是第一次載入或從其他頁面返回
         const isFirstLoad = !sessionStorage.getItem('appLoaded');
         
-        if (isFirstLoad) {
-            // 第一次載入，顯示完整啟動動畫
-            startupOverlay.style.display = 'flex';
-            
-            // 3秒後隱藏啟動動畫
-            setTimeout(function() {
-                startupOverlay.classList.add('hidden');
-                // 動畫結束後設置已載入標記
-                setTimeout(function() {
-                    sessionStorage.setItem('appLoaded', 'true');
-                }, 800); // 等待fade out動畫完成
-            }, 3000);
-        } else {
-            // 非第一次載入，立即隱藏啟動動畫
-            startupOverlay.style.display = 'none';
-        }
+        // 暫時跳過啟動動畫，直接進入主頁面
+        startupOverlay.style.display = 'none';
+        sessionStorage.setItem('appLoaded', 'true');
     }
     
     // 監聽頁面重新載入事件
