@@ -15,26 +15,57 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 自定義灰色主題CSS
+# 自定義灰藍色主題CSS
 st.markdown("""
 <style>
     /* 主背景顏色 */
     .stApp {
-        background-color: #f5f5f5;
+        background-color: #f8fafb;
     }
     
     /* 區塊背景 */
     .block-container {
-        background-color: #e8e8e8;
+        background-color: #ecf0f3;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
+    /* 主標題區域 */
+    .main-header {
+        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .location-selector-inline {
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        padding: 10px 15px;
+        min-width: 200px;
+    }
+    
+    .location-selector-inline .stSelectbox > div > div {
+        background-color: rgba(255,255,255,0.9);
+        border-radius: 8px;
+    }
+    
     /* 天氣區塊特殊樣式 */
     .weather-block {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
         color: white;
         padding: 20px;
         border-radius: 15px;
@@ -44,7 +75,7 @@ st.markdown("""
     
     /* 搜尋區塊 */
     .search-block {
-        background-color: #d6d6d6;
+        background-color: #e1e8ea;
         padding: 25px;
         border-radius: 15px;
         margin-bottom: 30px;
@@ -52,14 +83,14 @@ st.markdown("""
     
     /* 推薦區塊 */
     .recommend-block {
-        background-color: #c9c9c9;
+        background-color: #d4dde0;
         padding: 25px;
         border-radius: 15px;
     }
     
     /* icon按鈕樣式 */
     .icon-button {
-        background-color: #9e9e9e;
+        background-color: #a6bee2;
         border: none;
         border-radius: 50%;
         padding: 15px;
@@ -72,7 +103,7 @@ st.markdown("""
     }
     
     .icon-button:hover {
-        background-color: #757575;
+        background-color: #8fadd9;
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(0,0,0,0.3);
     }
@@ -251,7 +282,7 @@ if current_time - st.session_state.last_icon_update > 3:
 
 current_icon = sports_icons[st.session_state.current_sport_icon]
 
-# 使用Streamlit原生組件創建位置選擇器
+# ===== 主標題區域與位置選擇器 =====
 available_districts = ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', 
                       '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區']
 
@@ -261,62 +292,33 @@ if hasattr(st, 'query_params') and st.query_params.get('district'):
     if current_district in available_districts:
         st.session_state.selected_district = current_district
 
-# 創建右上角固定的位置選擇器容器
-st.markdown("""
-<style>
-.location-selector-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    background: linear-gradient(135deg, #636e72, #2d3436);
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    min-width: 200px;
-}
+# 主標題區域 - 包含logo和位置選擇器
+st.markdown('<div class="main-header">', unsafe_allow_html=True)
 
-.location-title {
-    color: white;
-    font-size: 0.9em;
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: bold;
-}
+# 使用兩列布局：左側logo，右側位置選擇器
+header_col1, header_col2 = st.columns([3, 2])
 
-.stSelectbox {
-    margin-bottom: 10px;
-}
+with header_col1:
+    st.markdown(f"""
+    <div class="logo-section">
+        <div style="font-size: 2.5em;">{current_icon}</div>
+        <div>
+            <h1 style="margin: 0; font-size: 2em;">台北運動場地搜尋引擎</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 1.1em;">找到最適合您的運動場地</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-.stSelectbox > div > div {
-    background-color: rgba(255,255,255,0.9);
-    border-radius: 8px;
-}
-
-.auto-locate-info {
-    color: white;
-    font-size: 0.8em;
-    text-align: center;
-    margin-top: 8px;
-    opacity: 0.9;
-}
-</style>
-
-<div class="location-selector-container">
-    <div class="location-title">📍 選擇位置</div>
-""", unsafe_allow_html=True)
-
-# 使用columns來控制選擇器寬度
-col1, col2, col3 = st.columns([0.1, 1, 0.1])
-with col2:
+with header_col2:
+    st.markdown('<div class="location-selector-inline">', unsafe_allow_html=True)
+    
     # 區域選擇下拉選單
     selected_district = st.selectbox(
-        "選擇行政區",
+        "📍 選擇位置",
         available_districts,
         index=available_districts.index(st.session_state.selected_district) if st.session_state.selected_district in available_districts else 0,
         key="district_selector",
-        help="選擇您所在的台北市行政區",
-        label_visibility="hidden"
+        help="選擇您所在的台北市行政區"
     )
     
     # 檢查是否有變更
@@ -325,128 +327,14 @@ with col2:
         # 使用query_params來觸發頁面重新載入
         st.query_params["district"] = selected_district
         st.rerun()
-
-# 自動定位按鈕和說明
-st.markdown("""
-    <div class="auto-locate-info">
-        💡 提示：可使用瀏覽器定位功能<br>
-        自動選擇最近的行政區
-    </div>
-</div>
-
-<script>
-// 台北市各區的中心座標
-const districtCoordinates = {
-    '松山區': [25.0497, 121.5746],
-    '信義區': [25.0396, 121.5683],
-    '大安區': [25.0329, 121.5354],
-    '中山區': [25.0703, 121.5261],
-    '中正區': [25.0320, 121.5130],
-    '大同區': [25.0630, 121.5134],
-    '萬華區': [25.0338, 121.4977],
-    '文山區': [24.9888, 121.5709],
-    '南港區': [25.0542, 121.6075],
-    '內湖區': [25.0823, 121.5810],
-    '士林區': [25.1037, 121.5258],
-    '北投區': [25.1316, 121.4998]
-};
-
-// 自動定位功能（點擊提示區域觸發）
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.auto-locate-info')) {
-        autoLocate();
-    }
-});
-
-function autoLocate() {
-    if (!navigator.geolocation) {
-        alert('❌ 瀏覽器不支援定位功能');
-        return;
-    }
     
-    const infoDiv = document.querySelector('.auto-locate-info');
-    const originalText = infoDiv.innerHTML;
-    infoDiv.innerHTML = '🔍 正在定位中...';
+    # 自動定位按鈕
+    if st.button("🎯 自動定位", help="使用GPS自動選擇最近的行政區"):
+        st.info("請在瀏覽器中允許定位權限")
     
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const userLat = position.coords.latitude;
-            const userLon = position.coords.longitude;
-            
-            // 檢查是否在台北市範圍內
-            if (userLat >= 24.95 && userLat <= 25.20 && 
-                userLon >= 121.45 && userLon <= 121.65) {
-                
-                const nearestDistrict = findNearestDistrict(userLat, userLon);
-                
-                // 更新URL參數並重新載入
-                const newUrl = new URL(window.location);
-                newUrl.searchParams.set('district', nearestDistrict);
-                
-                infoDiv.innerHTML = '✅ 定位成功，正在更新...';
-                setTimeout(() => {
-                    window.location.href = newUrl.toString();
-                }, 1000);
-            } else {
-                infoDiv.innerHTML = '❌ 您不在台北市範圍內';
-                setTimeout(() => {
-                    infoDiv.innerHTML = originalText;
-                }, 3000);
-            }
-        },
-        function(error) {
-            let errorMsg = '❌ 定位失敗';
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMsg = '❌ 請允許定位權限';
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    errorMsg = '❌ 位置資訊不可用';
-                    break;
-                case error.TIMEOUT:
-                    errorMsg = '❌ 定位超時';
-                    break;
-            }
-            infoDiv.innerHTML = errorMsg;
-            setTimeout(() => {
-                infoDiv.innerHTML = originalText;
-            }, 3000);
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000
-        }
-    );
-}
+    st.markdown('</div>', unsafe_allow_html=True)
 
-function findNearestDistrict(userLat, userLon) {
-    let minDistance = Infinity;
-    let nearestDistrict = '中正區';
-    
-    Object.entries(districtCoordinates).forEach(([district, [lat, lon]]) => {
-        const distance = calculateDistance(userLat, userLon, lat, lon);
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearestDistrict = district;
-        }
-    });
-    
-    return nearestDistrict;
-}
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-</script>
-""", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ===== 第一區塊：天氣資訊 =====
 # 獲取選擇的區域 - 優先順序：URL參數 > session_state > 預設值
@@ -495,29 +383,34 @@ exercise_advice = get_exercise_advice(
 
 st.markdown(f"""
 <div class="weather-block">
-    <h2>🌤️ 台北市即時天氣</h2>
+    <h2>🌤️ {selected_district} 即時天氣</h2>
     <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
         <div>
             <div style="font-size: 3em;">{weather_icon}</div>
-            <div style="font-size: 1.5em; font-weight: bold;">{weather_info['temperature']}°C</div>
-            <div>{weather_info['weather_description']}</div>
+            <div style="font-size: 1.8em; font-weight: bold;">{weather_info['temperature']}°C</div>
+            <div style="font-size: 1.1em;">{weather_info['weather_description']}</div>
         </div>
         <div>
             <div style="font-size: 2em;">💨</div>
-            <div>{weather_info['wind_direction']} {weather_info['wind_speed']}級</div>
-            <div>濕度 {weather_info['humidity']}%</div>
+            <div style="font-size: 1.1em;">{weather_info['wind_direction']} {weather_info['wind_speed']}級</div>
+            <div style="font-size: 1.1em;">濕度 {weather_info['humidity']}%</div>
         </div>
         <div>
             <div style="font-size: 2em;">📍</div>
-            <div style="font-weight: bold;">台北市</div>
-            <div>{weather_info['district']}</div>
+            <div style="font-weight: bold; font-size: 1.2em;">台北市</div>
+            <div style="font-size: 1.1em; color: #ffeb3b;">{weather_info['district']}</div>
         </div>
     </div>
-    <div style="margin-top: 15px; font-size: 0.9em;">
-        {exercise_advice} | 🌡️ 體感溫度 {weather_info['apparent_temperature']}°C | 🌧️ 降雨機率 {weather_info['precipitation_probability']}%
+    <div style="margin-top: 15px; font-size: 1em; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+        <strong>{exercise_advice}</strong>
     </div>
-    <div style="margin-top: 10px; font-size: 0.8em; opacity: 0.8;">
-        更新時間: {weather_info['update_time']} | 舒適度: {weather_info['comfort_index']}
+    <div style="margin-top: 10px; font-size: 0.9em; display: flex; justify-content: space-between;">
+        <span>🌡️ 體感 {weather_info['apparent_temperature']}°C</span>
+        <span>🌧️ 降雨 {weather_info['precipitation_probability']}%</span>
+        <span>😊 {weather_info['comfort_index']}</span>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.8em; opacity: 0.8; text-align: center;">
+        更新時間: {weather_info['update_time']}
     </div>
 </div>
 """, unsafe_allow_html=True)
