@@ -364,6 +364,29 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+    
+    /* 隱藏 Streamlit 頂部導航元素當啟動動畫顯示時 */
+    #appStartup:not(.hidden) {
+        display: flex !important;
+    }
+    
+    /* 全域隱藏頂部元素於啟動動畫期間 */
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"], 
+    [data-testid="stDeployButton"],
+    [data-testid="stMainMenu"],
+    [data-testid="stManageApp"] {
+        display: none !important;
+    }
+    
+    /* 當啟動動畫完成後重新顯示頂部元素 */
+    .app-startup-overlay.hidden ~ * [data-testid="stHeader"],
+    .app-startup-overlay.hidden ~ * [data-testid="stToolbar"],
+    .app-startup-overlay.hidden ~ * [data-testid="stDeployButton"],
+    .app-startup-overlay.hidden ~ * [data-testid="stMainMenu"],
+    .app-startup-overlay.hidden ~ * [data-testid="stManageApp"] {
+        display: block !important;
+    }
 </style>
 
 <!-- 應用啟動動畫HTML -->
@@ -430,14 +453,14 @@ window.addEventListener('load', function() {
             // 第一次載入，顯示完整啟動動畫
             startupOverlay.style.display = 'flex';
             
-            // 3.5秒後隱藏啟動動畫
+            // 3秒後隱藏啟動動畫
             setTimeout(function() {
                 startupOverlay.classList.add('hidden');
                 // 動畫結束後設置已載入標記
                 setTimeout(function() {
                     sessionStorage.setItem('appLoaded', 'true');
                 }, 800); // 等待fade out動畫完成
-            }, 3500);
+            }, 3000);
         } else {
             // 非第一次載入，立即隱藏啟動動畫
             startupOverlay.style.display = 'none';
