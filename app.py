@@ -127,6 +127,7 @@ st.markdown("""
         left: 0;
         width: 100%;
         height: 100%;
+        background-color: #a6bee2;
         z-index: 99999;
         display: flex;
         justify-content: center;
