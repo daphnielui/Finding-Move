@@ -176,7 +176,7 @@ st.markdown("""
     .startup-title-compact {
         position: fixed;
         top: calc(66.67vh - 1.5cm);
-        left: calc(50% + 0.5cm);
+        left: 50%;
         transform: translateX(-50%);
         font-size: 1em;
         font-weight: normal;
