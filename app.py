@@ -175,8 +175,8 @@ st.markdown("""
     /* 啟動標題 - 放置在頁面 2/3 位置 */
     .startup-title-compact {
         position: fixed;
-        top: 66.67vh;
-        left: 50%;
+        top: calc(66.67vh - 2cm);
+        left: calc(50% - 5cm);
         transform: translateX(-50%);
         font-size: 1em;
         font-weight: normal;
