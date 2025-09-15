@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import time
+import random
 from utils.data_manager import DataManager
 from utils.recommendation_engine import RecommendationEngine
 import os
@@ -9,8 +11,108 @@ st.set_page_config(
     page_title="台北運動場地搜尋引擎",
     page_icon="🏃‍♂️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
+
+# 自定義灰色主題CSS
+st.markdown("""
+<style>
+    /* 主背景顏色 */
+    .stApp {
+        background-color: #f5f5f5;
+    }
+    
+    /* 區塊背景 */
+    .block-container {
+        background-color: #e8e8e8;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* 天氣區塊特殊樣式 */
+    .weather-block {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    /* 搜尋區塊 */
+    .search-block {
+        background-color: #d6d6d6;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    
+    /* 推薦區塊 */
+    .recommend-block {
+        background-color: #c9c9c9;
+        padding: 25px;
+        border-radius: 15px;
+    }
+    
+    /* icon按鈕樣式 */
+    .icon-button {
+        background-color: #9e9e9e;
+        border: none;
+        border-radius: 50%;
+        padding: 15px;
+        font-size: 20px;
+        margin: 5px;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .icon-button:hover {
+        background-color: #757575;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    /* 動態運動icon */
+    .rotating-icon {
+        animation: rotation 3s infinite linear;
+        display: inline-block;
+        font-size: 24px;
+    }
+    
+    @keyframes rotation {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* 輸入欄樣式 */
+    .stTextInput > div > div > input {
+        background-color: #f0f0f0;
+        border: 2px solid #9e9e9e;
+        border-radius: 25px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    
+    /* 場館卡片樣式 */
+    .venue-card {
+        background-color: #f8f8f8;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        border-left: 4px solid #9e9e9e;
+    }
+    
+    /* 標題樣式 */
+    h1, h2, h3 {
+        color: #424242;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # 初始化 session state
 if 'data_manager' not in st.session_state:
@@ -19,201 +121,197 @@ if 'data_manager' not in st.session_state:
 if 'recommendation_engine' not in st.session_state:
     st.session_state.recommendation_engine = RecommendationEngine()
 
-if 'user_preferences' not in st.session_state:
-    st.session_state.user_preferences = {
-        'preferred_sports': [],
-        'preferred_districts': [],
-        'price_range': [0, 10000],
-        'search_history': []
-    }
+if 'current_sport_icon' not in st.session_state:
+    st.session_state.current_sport_icon = 0
 
-if 'selected_venue' not in st.session_state:
-    st.session_state.selected_venue = None
+# 運動icon列表
+sports_icons = ["🏀", "⚽", "🏸", "🏐", "🎾", "🏊‍♂️", "🏃‍♂️", "🚴‍♂️", "🏋️‍♂️", "🤸‍♂️"]
 
-# 主頁面
-st.title("🏃‍♂️ 台北運動場地搜尋引擎")
-st.markdown("### 尋找最適合您的運動場地")
+# 更新運動icon（每3秒換一次）
+if 'last_icon_update' not in st.session_state:
+    st.session_state.last_icon_update = time.time()
 
-# 側邊欄 - 用戶偏好設定
-with st.sidebar:
-    st.header("🎯 個人偏好設定")
-    
-    # 運動類型偏好
-    available_sports = st.session_state.data_manager.get_sport_types()
-    if available_sports:
-        preferred_sports = st.multiselect(
-            "偏好的運動類型",
-            available_sports,
-            default=st.session_state.user_preferences['preferred_sports']
-        )
-        st.session_state.user_preferences['preferred_sports'] = preferred_sports
-    else:
-        st.info("運動類型資料載入中...")
-    
-    # 地區偏好
-    available_districts = st.session_state.data_manager.get_districts()
-    if available_districts:
-        preferred_districts = st.multiselect(
-            "偏好的地區",
-            available_districts,
-            default=st.session_state.user_preferences['preferred_districts']
-        )
-        st.session_state.user_preferences['preferred_districts'] = preferred_districts
-    else:
-        st.info("地區資料載入中...")
-    
-    # 價格範圍偏好
-    price_range = st.slider(
-        "價格範圍 (每小時)",
-        0, 5000, 
-        value=st.session_state.user_preferences['price_range'],
-        step=100,
-        format="NT$%d"
-    )
-    st.session_state.user_preferences['price_range'] = price_range
+current_time = time.time()
+if current_time - st.session_state.last_icon_update > 3:
+    st.session_state.current_sport_icon = (st.session_state.current_sport_icon + 1) % len(sports_icons)
+    st.session_state.last_icon_update = current_time
 
-# 主要內容區域
-col1, col2 = st.columns([2, 1])
+current_icon = sports_icons[st.session_state.current_sport_icon]
 
-with col1:
-    st.subheader("📈 統計概覽")
+# ===== 第一區塊：天氣資訊 =====
+st.markdown("""
+<div class="weather-block">
+    <h2>🌤️ 台北市天氣資訊</h2>
+    <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
+        <div>
+            <div style="font-size: 3em;">☀️</div>
+            <div style="font-size: 1.5em; font-weight: bold;">25°C</div>
+            <div>晴朗</div>
+        </div>
+        <div>
+            <div style="font-size: 2em;">💨</div>
+            <div>東北風 3級</div>
+            <div>濕度 65%</div>
+        </div>
+        <div>
+            <div style="font-size: 2em;">📍</div>
+            <div style="font-weight: bold;">台北市</div>
+            <div>中正區</div>
+        </div>
+    </div>
+    <div style="margin-top: 15px; font-size: 0.9em;">
+        ☀️ 今日適合戶外運動 | 🌡️ 體感溫度 27°C | 🌧️ 降雨機率 10%
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ===== 第二區塊：搜尋功能 =====
+st.markdown('<div class="search-block">', unsafe_allow_html=True)
+
+# 搜尋標題
+st.markdown(f"""
+<div style="text-align: center; margin-bottom: 20px;">
+    <h2 style="color: #424242;">
+        <span class="rotating-icon">{current_icon}</span>
+        尋找最適合的運動場地
+        <span class="rotating-icon">{current_icon}</span>
+    </h2>
+</div>
+""", unsafe_allow_html=True)
+
+# 搜尋輸入欄
+search_col1, search_col2 = st.columns([4, 1])
+
+with search_col1:
+    search_placeholder = f"{current_icon} 輸入場地名稱、運動類型或地區..."
+    search_query = st.text_input("", placeholder=search_placeholder, label_visibility="collapsed")
+
+with search_col2:
+    search_button = st.button("🔍", help="開始搜尋", use_container_width=True, type="primary")
+
+# 篩選條件
+st.markdown('<div style="margin-top: 20px;"><h4 style="color: #424242;">📋 篩選條件</h4></div>', unsafe_allow_html=True)
+
+filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
+
+with filter_col1:
+    # 運動類型篩選
+    sport_types = ["全部", "籃球", "足球", "網球", "羽毛球", "游泳", "健身", "跑步", "桌球"]
+    selected_sport = st.selectbox("🏃‍♂️ 運動類型", sport_types)
+
+with filter_col2:
+    # 地區篩選
+    districts = ["全部", "中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"]
+    selected_district = st.selectbox("📍 地區", districts)
+
+with filter_col3:
+    # 價格範圍
+    price_range = st.selectbox("💰 價格範圍", ["全部", "免費", "NT$1-100", "NT$101-300", "NT$301-500", "NT$500以上"])
+
+with filter_col4:
+    # 評分篩選
+    rating_filter = st.selectbox("⭐ 評分", ["全部", "4.5分以上", "4.0分以上", "3.5分以上", "3.0分以上"])
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ===== 第三區塊：推薦場館 =====
+st.markdown('<div class="recommend-block">', unsafe_allow_html=True)
+
+st.markdown('<h2 style="color: #424242; text-align: center; margin-bottom: 25px;">🏆 推薦場館</h2>', unsafe_allow_html=True)
+
+# 獲取推薦場地
+venues_data = st.session_state.data_manager.get_all_venues()
+if venues_data is not None and not venues_data.empty:
+    # 隨機選擇6個場地作為推薦
+    recommended_venues = venues_data.sample(n=min(6, len(venues_data)))
     
-    # 顯示場地統計
-    stats = st.session_state.data_manager.get_venue_stats()
-    
-    if stats:
-        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    # 以3列2行方式展示推薦場館
+    for i in range(0, len(recommended_venues), 3):
+        cols = st.columns(3)
+        row_venues = recommended_venues.iloc[i:i+3]
         
-        with metric_col1:
-            st.metric("總場地數", stats.get('total_venues', 0))
-        
-        with metric_col2:
-            st.metric("運動類型", stats.get('sport_types', 0))
-        
-        with metric_col3:
-            st.metric("服務地區", stats.get('districts', 0))
-        
-        with metric_col4:
-            avg_price = stats.get('avg_price', 0)
-            st.metric("平均價格", f"NT${avg_price:.0f}/hr" if avg_price else "N/A")
-    else:
-        st.info("正在載入場地統計資料...")
-
-    # 快速搜尋
-    st.subheader("🔍 快速搜尋")
-    
-    search_col1, search_col2 = st.columns([3, 1])
-    
-    with search_col1:
-        search_query = st.text_input("搜尋場地名稱或關鍵字", placeholder="例如：籃球場、游泳池、大安區...")
-    
-    with search_col2:
-        if st.button("搜尋", type="primary", use_container_width=True):
-            if search_query:
-                # 記錄搜尋歷史
-                if search_query not in st.session_state.user_preferences['search_history']:
-                    st.session_state.user_preferences['search_history'].append(search_query)
-                    # 只保留最近10次搜尋
-                    if len(st.session_state.user_preferences['search_history']) > 10:
-                        st.session_state.user_preferences['search_history'].pop(0)
+        for j, (_, venue) in enumerate(row_venues.iterrows()):
+            with cols[j]:
+                # 場館圖片（暫時用emoji替代）
+                sport_type = venue.get('sport_type', '運動')
+                venue_icon = "🏟️"
+                if "籃球" in sport_type:
+                    venue_icon = "🏀"
+                elif "游泳" in sport_type:
+                    venue_icon = "🏊‍♂️"
+                elif "網球" in sport_type:
+                    venue_icon = "🎾"
+                elif "足球" in sport_type:
+                    venue_icon = "⚽"
+                elif "羽毛球" in sport_type:
+                    venue_icon = "🏸"
+                elif "健身" in sport_type:
+                    venue_icon = "🏋️‍♂️"
                 
-                # 執行搜尋
-                results = st.session_state.data_manager.search_venues(search_query)
+                st.markdown(f"""
+                <div class="venue-card">
+                    <div style="text-align: center; font-size: 3em; margin-bottom: 10px;">
+                        {venue_icon}
+                    </div>
+                    <div style="text-align: center;">
+                        <h4 style="color: #424242; margin-bottom: 8px;">{venue.get('name', '未知場地')}</h4>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">
+                            📍 {venue.get('district', '未知地區')}
+                        </p>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">
+                            🏃‍♂️ {venue.get('sport_type', '未指定')}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                            <span style="color: #e91e63; font-weight: bold;">
+                                💰 NT${venue.get('price_per_hour', 0)}/小時
+                            </span>
+                            <span style="color: #ff9800; font-weight: bold;">
+                                ⭐ {venue.get('rating', 0):.1f}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                if results is not None and not results.empty:
-                    st.success(f"找到 {len(results)} 個相關場地")
-                    
-                    # 顯示搜尋結果
-                    for idx, venue in results.iterrows():
-                        with st.expander(f"📍 {venue.get('name', '未知場地')} - {venue.get('district', '未知地區')}"):
-                            venue_col1, venue_col2 = st.columns([2, 1])
-                            
-                            with venue_col1:
-                                st.write(f"**地址:** {venue.get('address', '地址未提供')}")
-                                st.write(f"**運動類型:** {venue.get('sport_type', '未指定')}")
-                                st.write(f"**設施:** {venue.get('facilities', '設施資訊未提供')}")
-                                if venue.get('description'):
-                                    st.write(f"**描述:** {venue.get('description')}")
-                            
-                            with venue_col2:
-                                if venue.get('price_per_hour'):
-                                    st.metric("每小時費用", f"NT${venue.get('price_per_hour')}")
-                                if venue.get('rating'):
-                                    st.metric("評分", f"{venue.get('rating'):.1f}/5.0")
-                                
-                                if st.button(f"查看詳情", key=f"detail_{idx}"):
-                                    st.session_state.selected_venue = venue.to_dict()
-                                    st.switch_page("pages/1_🔍_Search_Venues.py")
-                else:
-                    st.warning("未找到相關場地，請嘗試其他關鍵字或使用進階搜尋功能。")
+                # 詳情按鈕
+                if st.button(f"📋 查看詳情", key=f"venue_detail_{venue.get('id', i)}_{j}", use_container_width=True):
+                    venue_id = venue.get('id')
+                    if venue_id:
+                        st.query_params.id = venue_id
+                        st.switch_page("pages/5_🏢_場地詳情.py")
 
-with col2:
-    st.subheader("🏆 為您推薦")
-    
-    # 基於用戶偏好的推薦
-    if (st.session_state.user_preferences['preferred_sports'] or 
-        st.session_state.user_preferences['preferred_districts']):
-        
-        recommendations = st.session_state.recommendation_engine.get_personalized_recommendations(
-            st.session_state.user_preferences
-        )
-        
-        if recommendations is not None and not recommendations.empty:
-            for idx, venue in recommendations.head(5).iterrows():
-                with st.container():
-                    st.markdown(f"**📍 {venue.get('name', '未知場地')}**")
-                    st.markdown(f"🏃‍♂️ {venue.get('sport_type', '未指定')}")
-                    st.markdown(f"📍 {venue.get('district', '未知地區')}")
-                    
-                    if venue.get('price_per_hour'):
-                        st.markdown(f"💰 NT${venue.get('price_per_hour')}/hr")
-                    
-                    if venue.get('rating'):
-                        rating = venue.get('rating', 0)
-                        stars = "⭐" * int(rating) if rating else ""
-                        st.markdown(f"{stars} {venue.get('rating'):.1f}")
-                    
-                    if st.button(f"查看", key=f"rec_{idx}", use_container_width=True):
-                        st.session_state.selected_venue = venue.to_dict()
-                        st.switch_page("pages/1_🔍_Search_Venues.py")
-                    
-                    st.divider()
-        else:
-            st.info("設定您的偏好以獲得個人化推薦")
-    else:
-        st.info("請在側邊欄設定您的偏好，我們將為您推薦最適合的場地！")
-    
-    # 搜尋歷史
-    if st.session_state.user_preferences['search_history']:
-        st.subheader("🕒 最近搜尋")
-        for query in reversed(st.session_state.user_preferences['search_history'][-5:]):
-            if st.button(f"🔍 {query}", key=f"history_{query}", use_container_width=True):
-                results = st.session_state.data_manager.search_venues(query)
-                if results is not None and not results.empty:
-                    st.session_state.selected_venue = results.iloc[0].to_dict()
-                    st.switch_page("pages/1_🔍_Search_Venues.py")
+else:
+    st.info("正在載入場地資料...")
 
-# 頁面導航提示
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 底部功能導航
 st.markdown("---")
 st.markdown("""
-### 🧭 功能導航
-- **🔍 搜尋場地**: 詳細的場地搜尋和篩選功能
-- **🗺️ 地圖檢視**: 在地圖上查看所有場地位置
-- **⭐ 個人推薦**: 基於您偏好的個人化推薦
-- **📊 資料分析**: 場地使用趨勢和統計分析
-""")
+<div style="text-align: center; padding: 20px;">
+    <h3 style="color: #424242; margin-bottom: 20px;">🧭 功能導航</h3>
+</div>
+""", unsafe_allow_html=True)
 
-# 應用資訊
-with st.expander("ℹ️ 關於本應用"):
-    st.markdown("""
-    **台北運動場地搜尋引擎** 是一個專為台北市民設計的運動場地搜尋平台。
-    
-    **主要功能:**
-    - 🔍 智慧搜尋：根據關鍵字快速找到相關場地
-    - 📍 地圖定位：視覺化場地位置，方便規劃路線
-    - ⭐ 個人推薦：基於您的偏好和搜尋歷史推薦場地
-    - 📊 數據洞察：了解場地使用趨勢和熱門選擇
-    
-    **支援的運動類型:**
-    籃球、足球、網球、羽毛球、游泳、健身房、跑步、桌球等多種運動項目
-    """)
+nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
+
+with nav_col1:
+    if st.button("🔍\n場地搜尋", use_container_width=True):
+        st.switch_page("pages/1_🔍_場地搜尋.py")
+
+with nav_col2:
+    if st.button("🗺️\n地圖檢視", use_container_width=True):
+        st.switch_page("pages/2_🗺️_地圖檢視.py")
+
+with nav_col3:
+    if st.button("⭐\n個人推薦", use_container_width=True):
+        st.switch_page("pages/3_⭐_個人推薦.py")
+
+with nav_col4:
+    if st.button("⚖️\n場地比較", use_container_width=True):
+        st.switch_page("pages/4_⚖️_場地比較.py")
+
+# 定期更新動態icon (避免無限重載)
+if current_time - st.session_state.last_icon_update > 3:
+    # 每3秒自動更新一次頁面
+    time.sleep(0.1)
