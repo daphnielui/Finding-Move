@@ -176,7 +176,7 @@ st.markdown("""
     .startup-title-compact {
         position: fixed;
         top: calc(66.67vh - 1.5cm);
-        left: calc(50% - 5cm);
+        left: calc(50% + 5cm);
         transform: translateX(-50%);
         font-size: 1em;
         font-weight: normal;
@@ -188,52 +188,50 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
-    /* 字符弹跳动画 */
+    /* 字符弹跳动画 - 单个字符依次跳动 */
     .bounce-char {
         display: inline-block;
-        animation: charBounce 0.6s ease-in-out infinite;
+        animation: charBounceOnce 0.6s ease-in-out;
+        animation-fill-mode: both;
     }
     
-    @keyframes charBounce {
-        0%, 100% {
+    @keyframes charBounceOnce {
+        0% {
             transform: translateY(0);
         }
         50% {
             transform: translateY(-0.2cm);
         }
+        100% {
+            transform: translateY(0);
+        }
     }
     
-    /* 为每个字符设置不同的动画延迟 */
+    /* 为每个字符设置不同的动画延迟 - 依次跳动 */
     .bounce-char:nth-child(1) { animation-delay: 0s; }
-    .bounce-char:nth-child(2) { animation-delay: 0.1s; }
-    .bounce-char:nth-child(3) { animation-delay: 0.2s; }
-    .bounce-char:nth-child(4) { animation-delay: 0.3s; }
-    .bounce-char:nth-child(5) { animation-delay: 0.4s; }
-    .bounce-char:nth-child(6) { animation-delay: 0.5s; }
-    .bounce-char:nth-child(7) { animation-delay: 0.6s; }
-    .bounce-char:nth-child(8) { animation-delay: 0.7s; }
-    .bounce-char:nth-child(9) { animation-delay: 0.8s; }
-    .bounce-char:nth-child(10) { animation-delay: 0.9s; }
-    .bounce-char:nth-child(11) { animation-delay: 1.0s; }
-    .bounce-char:nth-child(12) { animation-delay: 1.1s; }
-    .bounce-char:nth-child(13) { animation-delay: 1.2s; }
-    .bounce-char:nth-child(14) { animation-delay: 1.3s; }
-    .bounce-char:nth-child(15) { animation-delay: 1.4s; }
-    .bounce-char:nth-child(16) { animation-delay: 1.5s; }
-    .bounce-char:nth-child(17) { animation-delay: 1.6s; }
-    .bounce-char:nth-child(18) { animation-delay: 1.7s; }
-    .bounce-char:nth-child(19) { animation-delay: 1.8s; }
-    .bounce-char:nth-child(20) { animation-delay: 1.9s; }
-    .bounce-char:nth-child(21) { animation-delay: 2.0s; }
-    .bounce-char:nth-child(22) { animation-delay: 2.1s; }
-    .bounce-char:nth-child(23) { animation-delay: 2.2s; }
-    .bounce-char:nth-child(24) { animation-delay: 2.3s; }
-    .bounce-char:nth-child(25) { animation-delay: 2.4s; }
-    .bounce-char:nth-child(26) { animation-delay: 2.5s; }
-    .bounce-char:nth-child(27) { animation-delay: 2.6s; }
-    .bounce-char:nth-child(28) { animation-delay: 2.7s; }
-    .bounce-char:nth-child(29) { animation-delay: 2.8s; }
-    .bounce-char:nth-child(30) { animation-delay: 2.9s; }
+    .bounce-char:nth-child(2) { animation-delay: 0.6s; }
+    .bounce-char:nth-child(3) { animation-delay: 1.2s; }
+    .bounce-char:nth-child(4) { animation-delay: 1.8s; }
+    .bounce-char:nth-child(5) { animation-delay: 2.4s; }
+    .bounce-char:nth-child(6) { animation-delay: 3.0s; }
+    .bounce-char:nth-child(7) { animation-delay: 3.6s; }
+    .bounce-char:nth-child(8) { animation-delay: 4.2s; }
+    .bounce-char:nth-child(9) { animation-delay: 4.8s; }
+    .bounce-char:nth-child(10) { animation-delay: 5.4s; }
+    .bounce-char:nth-child(11) { animation-delay: 6.0s; }
+    .bounce-char:nth-child(12) { animation-delay: 6.6s; }
+    .bounce-char:nth-child(13) { animation-delay: 7.2s; }
+    .bounce-char:nth-child(14) { animation-delay: 7.8s; }
+    .bounce-char:nth-child(15) { animation-delay: 8.4s; }
+    .bounce-char:nth-child(16) { animation-delay: 9.0s; }
+    .bounce-char:nth-child(17) { animation-delay: 9.6s; }
+    .bounce-char:nth-child(18) { animation-delay: 10.2s; }
+    .bounce-char:nth-child(19) { animation-delay: 10.8s; }
+    .bounce-char:nth-child(20) { animation-delay: 11.4s; }
+    .bounce-char:nth-child(21) { animation-delay: 12.0s; }
+    .bounce-char:nth-child(22) { animation-delay: 12.6s; }
+    .bounce-char:nth-child(23) { animation-delay: 13.2s; }
+    .bounce-char:nth-child(24) { animation-delay: 13.8s; }
     
     @keyframes titleSlideUp {
         0% {
