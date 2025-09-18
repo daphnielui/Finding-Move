@@ -319,25 +319,7 @@ st.markdown("""
         100% { transform: rotate(360deg); }
     }
     
-    /* 启动动画时隐藏顶部白色条和所有Streamlit UI元素 */
-    .app-startup-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
-        z-index: 99999;
-        display: none;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-    }
-    
-    .app-startup-overlay + div[data-testid="stAppViewContainer"] {
-        visibility: hidden;
-    }
-    
+    /* 隐藏顶部白色条 */
     header[data-testid="stHeader"] {
         display: none !important;
     }

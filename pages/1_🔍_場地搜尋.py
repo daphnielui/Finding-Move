@@ -12,9 +12,65 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 启动页面守卫 - 确保用户总是看到登入画面
+# 启动动画逻辑 - 如果是首次访问，显示启动动画
 if 'startup_done' not in st.session_state:
-    st.switch_page("app.py")
+    # 读取logo文件
+    with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
+        logo_data = f.read()
+    
+    # 编码为base64
+    import base64
+    logo_base64 = base64.b64encode(logo_data).decode()
+    
+    # 显示启动动画
+    startup_html = f'''
+    <div id="appStartup" class="app-startup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%); z-index: 99999; display: flex !important; justify-content: center; align-items: center; flex-direction: column; color: white;">
+        <div style="text-align: center;">
+            <img src="data:image/jpeg;base64,{logo_base64}" style="max-width: 200px; max-height: 200px; margin-bottom: 30px; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
+            <div style="font-size: 1.2em; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.1s;">地</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.2s;">寳</span>
+                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.3s;"> - </span>
+                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.4s;">根</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.5s;">據</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.8s;">節</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.9s;">奏</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.0s;">，</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.1s;">找</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.2s;">到</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.3s;">最</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.4s;">適</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.5s;">合</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.8s;">運</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.9s;">動</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.0s;">場</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.1s;">所</span>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes logoFadeIn {{
+            0% {{ opacity: 0; transform: scale(0.8) translateY(20px); }}
+            100% {{ opacity: 1; transform: scale(1) translateY(0); }}
+        }}
+        @keyframes charBounce {{
+            0% {{ transform: translateY(0); }}
+            50% {{ transform: translateY(-10px); }}
+            100% {{ transform: translateY(0); }}
+        }}
+        header[data-testid="stHeader"] {{ display: none !important; }}
+    </style>
+    
+    <script>
+        setTimeout(function() {{
+            var overlay = document.getElementById('appStartup');
+            if (overlay) {{
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.8s ease-out';
+                setTimeout(function() {{
+                    overlay.style.display = 'none';
+                }}, 800);
+            }}
+        }}, 3000);
+    </script>
+    '''
+    
+    st.markdown(startup_html, unsafe_allow_html=True)
+    
+    # 等待动画播放
+    import time
+    time.sleep(3.5)
+    
+    # 设置标志
+    st.session_state.startup_done = True
+    st.rerun()
 
 # 自定義灰藍色主題CSS
 st.markdown("""
