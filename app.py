@@ -404,15 +404,11 @@ startup_html = f'''
 </div>
 
 <script>
-// 3秒后自动隐藏启动画面，然后跳转
+// 3秒后自动隐藏启动画面
 setTimeout(function() {{
     var overlay = document.getElementById('appStartup');
     if (overlay) {{
         overlay.classList.add('hidden');
-        setTimeout(function() {{
-            // 自动跳转到主页面
-            window.location.href = '/pages/1_🔍_場地搜尋';
-        }}, 800);
     }}
 }}, 3000);
 </script>
@@ -431,6 +427,9 @@ if 'selected_district' not in st.session_state:
     st.session_state.selected_district = '中正區'
 if 'user_location' not in st.session_state:
     st.session_state.user_location = None
+
+# 设置启动完成标志
+st.session_state.startup_done = True
 
 # 自动跳转到主页面
 st.switch_page("pages/1_🔍_場地搜尋.py")

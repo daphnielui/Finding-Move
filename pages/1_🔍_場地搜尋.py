@@ -12,7 +12,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 认证守卫已移除
+# 启动页面守卫 - 确保用户总是看到登入画面
+if 'startup_done' not in st.session_state:
+    st.switch_page("app.py")
 
 # 自定義灰藍色主題CSS
 st.markdown("""
@@ -233,7 +235,40 @@ exercise_advice = get_exercise_advice(
     weather_info['precipitation_probability']
 )
 
-# 移除蓝色天气区块 - 用户不需要在搜索引擎上方显示
+# ===== 天氣預報區塊 =====
+st.markdown(f"""
+<div class="weather-block">
+    <h2>🌤️ {selected_district} 即時天氣</h2>
+    <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
+        <div>
+            <div style="font-size: 3em;">{weather_icon}</div>
+            <div style="font-size: 1.8em; font-weight: bold;">{weather_info['temperature']}°C</div>
+            <div style="font-size: 1.1em;">{weather_info['weather_description']}</div>
+        </div>
+        <div>
+            <div style="font-size: 2em;">💨</div>
+            <div style="font-size: 1.1em;">{weather_info['wind_direction']} {weather_info['wind_speed']}級</div>
+            <div style="font-size: 1.1em;">濕度 {weather_info['humidity']}%</div>
+        </div>
+        <div>
+            <div style="font-size: 2em;">📍</div>
+            <div style="font-weight: bold; font-size: 1.2em;">台北市</div>
+            <div style="font-size: 1.1em; color: #ffeb3b;">{weather_info['district']}</div>
+        </div>
+    </div>
+    <div style="margin-top: 15px; font-size: 1em; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+        <strong>{exercise_advice}</strong>
+    </div>
+    <div style="margin-top: 10px; font-size: 0.9em; display: flex; justify-content: space-between;">
+        <span>🌡️ 體感 {weather_info['apparent_temperature']}°C</span>
+        <span>🌧️ 降雨 {weather_info['precipitation_probability']}%</span>
+        <span>😊 {weather_info['comfort_index']}</span>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.8em; opacity: 0.8; text-align: center;">
+        更新時間: {weather_info['update_time']}
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ===== 搜尋功能區塊 =====
 st.markdown('<div class="search-block">', unsafe_allow_html=True)
