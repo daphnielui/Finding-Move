@@ -160,20 +160,22 @@ st.markdown("""
         }
     }
     
-    /* 啟動標題 - 放置在頁面 2/3 位置 */
+    /* 啟動標題 - 放置在中心下方4.5cm位置 */
     .startup-title-compact {
         position: fixed;
-        top: calc(66.67vh - 1.5cm);
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
-        font-size: 1em;
+        transform: translate(-50%, calc(-50% + 4.5cm));
+        font-size: clamp(0.8rem, 2.5vw, 1.2rem);
         font-weight: normal;
         text-align: center;
         opacity: 0.9;
         white-space: nowrap;
         font-family: 'uoqmunthenkhung', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
-        letter-spacing: 2px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        letter-spacing: 1px;
+        color: white;
+        width: 90vw;
+        max-width: 800px;
     }
     
     /* 字符弹跳动画 - 单个字符依次跳动 */
@@ -360,6 +362,99 @@ st.markdown("""
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* ===== 啟動動畫響應式設計 ===== */
+    
+    /* 手機設備 */
+    @media only screen and (max-width: 768px) {
+        .startup-title-compact {
+            font-size: clamp(0.7rem, 3.5vw, 1rem) !important;
+            width: 95vw !important;
+            letter-spacing: 0.5px !important;
+            transform: translate(-50%, calc(-50% + 3cm)) !important;
+        }
+        
+        .startup-logo {
+            max-width: 95vw !important;
+            max-height: 70vh !important;
+        }
+        
+        .app-startup-overlay {
+            padding: 10px !important;
+        }
+    }
+    
+    /* 平板設備 */
+    @media only screen and (min-width: 769px) and (max-width: 1024px) {
+        .startup-title-compact {
+            font-size: clamp(0.8rem, 2.8vw, 1.1rem) !important;
+            width: 90vw !important;
+            transform: translate(-50%, calc(-50% + 4cm)) !important;
+        }
+        
+        .startup-logo {
+            max-width: 90vw !important;
+            max-height: 80vh !important;
+        }
+    }
+    
+    /* 超小螢幕設備 */
+    @media only screen and (max-width: 480px) {
+        .startup-title-compact {
+            font-size: clamp(0.6rem, 4vw, 0.9rem) !important;
+            width: 98vw !important;
+            letter-spacing: 0px !important;
+            transform: translate(-50%, calc(-50% + 2.5cm)) !important;
+        }
+        
+        .startup-logo {
+            max-width: 98vw !important;
+            max-height: 60vh !important;
+        }
+        
+        .bounce-char {
+            animation-duration: 0.4s !important;
+        }
+    }
+    
+    /* 大螢幕設備 */
+    @media only screen and (min-width: 1200px) {
+        .startup-title-compact {
+            font-size: 1.2rem !important;
+            max-width: 600px !important;
+        }
+        
+        .startup-logo {
+            max-width: 80vw !important;
+            max-height: 85vh !important;
+        }
+    }
+    
+    /* 橫向模式優化 */
+    @media only screen and (orientation: landscape) and (max-height: 600px) {
+        .startup-title-compact {
+            transform: translate(-50%, calc(-50% + 2cm)) !important;
+            font-size: clamp(0.7rem, 2vw, 1rem) !important;
+        }
+        
+        .startup-logo {
+            max-height: 60vh !important;
+        }
+    }
+    
+    /* 全域響應式設定 */
+    .app-startup-overlay {
+        overflow: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .startup-logo-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>
 """, unsafe_allow_html=True)
