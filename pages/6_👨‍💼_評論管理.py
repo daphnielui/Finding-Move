@@ -8,6 +8,112 @@ st.set_page_config(
     layout="wide"
 )
 
+# 響應式設計CSS
+st.markdown("""
+<style>
+    /* 全域響應式設定 */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* 手機設備響應式 */
+    @media only screen and (max-width: 768px) {
+        .stApp {
+            padding: 10px !important;
+        }
+        
+        /* 標題響應式 */
+        h1 {
+            font-size: 1.5em !important;
+        }
+        
+        h2 {
+            font-size: 1.3em !important;
+        }
+        
+        /* 按鈕響應式 */
+        .stButton button {
+            width: 100% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+        }
+        
+        /* 列布局響應式 */
+        [data-testid="column"] {
+            padding: 5px !important;
+        }
+        
+        /* 標籤頁響應式 */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 5px !important;
+        }
+        
+        /* 表單響應式 */
+        .stTextInput > div > div > input {
+            font-size: 16px !important;
+            padding: 12px !important;
+        }
+        
+        /* 管理面板響應式 */
+        .element-container {
+            width: 100% !important;
+        }
+        
+        /* 評論卡片響應式 */
+        [data-testid="container"] {
+            width: 100% !important;
+            margin-bottom: 15px !important;
+        }
+    }
+    
+    /* 平板設備響應式 */
+    @media only screen and (min-width: 769px) and (max-width: 1024px) {
+        .stApp {
+            padding: 15px !important;
+        }
+        
+        h1 {
+            font-size: 1.8em !important;
+        }
+        
+        .stButton button {
+            padding: 10px 15px !important;
+            font-size: 15px !important;
+        }
+    }
+    
+    /* 超小螢幕設備響應式 */
+    @media only screen and (max-width: 480px) {
+        h1 {
+            font-size: 1.3em !important;
+        }
+        
+        h2 {
+            font-size: 1.1em !important;
+        }
+        
+        .stTabs [data-baseweb="tab-list"] button {
+            font-size: 12px !important;
+            padding: 8px !important;
+        }
+        
+        .stTextInput > div > div > input {
+            font-size: 14px !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 確保 session state 已初始化
 if 'data_manager' not in st.session_state:
     st.session_state.data_manager = DataManager()

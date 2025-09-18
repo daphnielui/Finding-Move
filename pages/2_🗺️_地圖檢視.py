@@ -11,6 +11,114 @@ st.set_page_config(
     layout="wide"
 )
 
+# 響應式設計CSS
+st.markdown("""
+<style>
+    /* 全域響應式設定 */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* 手機設備響應式 */
+    @media only screen and (max-width: 768px) {
+        .stApp {
+            padding: 10px !important;
+        }
+        
+        /* 標題響應式 */
+        h1 {
+            font-size: 1.5em !important;
+        }
+        
+        h2 {
+            font-size: 1.3em !important;
+        }
+        
+        /* 按鈕響應式 */
+        .stButton button {
+            width: 100% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+        }
+        
+        /* 側邊欄響應式 */
+        .css-1d391kg {
+            width: 100% !important;
+        }
+        
+        /* 列布局響應式 */
+        [data-testid="column"] {
+            padding: 5px !important;
+        }
+        
+        /* 滑桿響應式 */
+        .stSlider {
+            width: 100% !important;
+        }
+        
+        /* 多選框響應式 */
+        .stMultiSelect {
+            width: 100% !important;
+        }
+        
+        /* 地圖響應式 */
+        iframe {
+            width: 100% !important;
+            height: 400px !important;
+        }
+    }
+    
+    /* 平板設備響應式 */
+    @media only screen and (min-width: 769px) and (max-width: 1024px) {
+        .stApp {
+            padding: 15px !important;
+        }
+        
+        h1 {
+            font-size: 1.8em !important;
+        }
+        
+        .stButton button {
+            padding: 10px 15px !important;
+            font-size: 15px !important;
+        }
+        
+        iframe {
+            height: 500px !important;
+        }
+    }
+    
+    /* 超小螢幕設備響應式 */
+    @media only screen and (max-width: 480px) {
+        h1 {
+            font-size: 1.3em !important;
+        }
+        
+        h2 {
+            font-size: 1.1em !important;
+        }
+        
+        .stSelectbox > div > div {
+            font-size: 14px !important;
+        }
+        
+        iframe {
+            height: 350px !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 认证守卫已移除
 
 # 確保 session state 已初始化
