@@ -141,8 +141,8 @@ st.markdown("""
     
     /* 啟動logo動畫 */
     .startup-logo {
-        max-width: 90vw;
-        max-height: 90vh;
+        max-width: 450vw;
+        max-height: 450vh;
         width: auto;
         height: auto;
         animation: logoFadeIn 1.5s ease-out;
