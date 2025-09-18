@@ -14,8 +14,8 @@ st.set_page_config(
 
 # 启动动画逻辑 - 如果是首次访问，显示启动动画
 if 'startup_done' not in st.session_state:
-    # 读取logo文件 (使用高质量投影片版本)
-    with open('attached_assets/stock_images/finding_move_logo_hi_65808ab7.jpg', 'rb') as f:
+    # 读取logo文件 (使用原本版本)
+    with open('attached_assets/FM logo (1)_1757941346502.jpg', 'rb') as f:
         logo_data = f.read()
     
     # 编码为base64
