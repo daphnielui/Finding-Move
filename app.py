@@ -15,101 +15,66 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 自定義灰藍色主題CSS
+# 統一響應式設計 - 簡潔高效
 st.markdown("""
 <style>
-    /* 主背景顏色 */
-    .stApp {
-        background-color: #f8fafb;
+    /* 統一響應式設計系統 */
+    * { box-sizing: border-box; }
+    html, body { width: 100%; overflow-x: hidden; margin: 0; padding: 0; }
+    
+    .stApp { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        padding: 20px; 
     }
     
-    /* 區塊背景 */
-    .block-container {
-        background-color: #ecf0f3;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* 手機響應 */
+    @media screen and (max-width: 768px) {
+        .stApp { padding: 10px !important; }
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.3rem !important; }
+        .stButton > button { 
+            width: 100% !important; 
+            padding: 12px !important; 
+            font-size: 16px !important; 
+        }
+        .stTextInput > div > div > input,
+        .stSelectbox > div > div { 
+            font-size: 16px !important; 
+            padding: 12px !important; 
+        }
+        [data-testid="column"] { padding: 5px !important; }
+        iframe { width: 100% !important; height: 400px !important; }
+        .js-plotly-plot { width: 100% !important; }
     }
     
-    /* 主標題區域 */
-    .main-header {
-        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
+    @media screen and (max-width: 480px) {
+        .stApp { padding: 5px !important; }
+        h1 { font-size: 1.3rem !important; }
+        iframe { height: 350px !important; }
+    }
+    
+    /* 啟動動畫響應式 */
+    .startup-title-compact {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, calc(-50% + 4.5cm));
+        font-size: clamp(0.6rem, 1.8vw, 0.9rem);
         color: white;
-        padding: 20px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    
-    .logo-section {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .location-selector-inline {
-        background: rgba(255,255,255,0.2);
-        border-radius: 10px;
-        padding: 10px 15px;
-        min-width: 200px;
-    }
-    
-    .location-selector-inline .stSelectbox > div > div {
-        background-color: rgba(255,255,255,0.9);
-        border-radius: 8px;
-    }
-    
-    /* 天氣區塊特殊樣式 */
-    .weather-block {
-        background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
+        white-space: nowrap;
+        width: 95vw;
         text-align: center;
-        margin-bottom: 30px;
+        font-family: 'Microsoft JhengHei', sans-serif;
     }
     
-    /* 搜尋區塊 */
-    .search-block {
-        background-color: #ecf0f3;
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    @media screen and (max-width: 768px) {
+        .startup-title-compact {
+            font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
+            width: 98vw !important;
+        }
     }
     
-    /* 推薦區塊 */
-    .recommend-block {
-        background-color: #ecf0f3;
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    
-    /* 運動icon旋轉動畫 */
-    @keyframes rotation {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    
-    /* 動態運動icon */
-    .rotating-icon {
-        animation: rotation 3s infinite linear;
-        display: inline-block;
-        font-size: 24px;
-    }
-    
-    @keyframes rotation {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-    
-    /* 應用啟動動畫覆蓋層 */
     .app-startup-overlay {
         position: fixed;
         top: 0;
@@ -122,15 +87,13 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         flex-direction: column;
-        color: white;
-        font-family: 'Arial', sans-serif;
     }
     
-    .startup-logo-container {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .startup-logo {
+        max-width: 100vw;
+        max-height: 100vh;
+        width: auto;
+        height: auto;
     }
     
     .app-startup-overlay.hidden {
@@ -139,323 +102,18 @@ st.markdown("""
         transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
     }
     
-    /* 啟動logo動畫 */
-    .startup-logo {
-        max-width: 100vw;
-        max-height: 100vh;
-        width: auto;
-        height: auto;
-        animation: logoFadeIn 1.5s ease-out;
-        position: relative;
-    }
-    
-    @keyframes logoFadeIn {
-        0% {
-            opacity: 0;
-            transform: scale(0.8) translateY(20px);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-    }
-    
-    /* 啟動標題 - 放置在中心下方4.5cm位置 */
-    .startup-title-compact {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, calc(-50% + 4.5cm));
-        font-size: clamp(0.6rem, 1.8vw, 0.9rem);
-        font-weight: normal;
-        text-align: center;
-        opacity: 0.9;
-        white-space: nowrap;
-        font-family: 'uoqmunthenkhung', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
-        letter-spacing: 0.5px;
-        color: white;
-        width: 95vw;
-        max-width: 900px;
-    }
-    
-    /* 字符弹跳动画 - 单个字符依次跳动 */
     .bounce-char {
         display: inline-block;
-        animation: charBounceOnce 0.6s ease-in-out;
-        animation-fill-mode: both;
+        animation: charBounce 0.6s ease-in-out;
     }
     
-    @keyframes charBounceOnce {
-        0% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-0.2cm);
-        }
-        100% {
-            transform: translateY(0);
-        }
-    }
-    
-    /* 为每个字符设置不同的动画延迟 - 依次跳动 */
-    .bounce-char:nth-child(1) { animation-delay: 0s; }
-    .bounce-char:nth-child(2) { animation-delay: 0.6s; }
-    .bounce-char:nth-child(3) { animation-delay: 1.2s; }
-    .bounce-char:nth-child(4) { animation-delay: 1.8s; }
-    .bounce-char:nth-child(5) { animation-delay: 2.4s; }
-    .bounce-char:nth-child(6) { animation-delay: 3.0s; }
-    .bounce-char:nth-child(7) { animation-delay: 3.6s; }
-    .bounce-char:nth-child(8) { animation-delay: 4.2s; }
-    .bounce-char:nth-child(9) { animation-delay: 4.8s; }
-    .bounce-char:nth-child(10) { animation-delay: 5.4s; }
-    .bounce-char:nth-child(11) { animation-delay: 6.0s; }
-    .bounce-char:nth-child(12) { animation-delay: 6.6s; }
-    .bounce-char:nth-child(13) { animation-delay: 7.2s; }
-    .bounce-char:nth-child(14) { animation-delay: 7.8s; }
-    .bounce-char:nth-child(15) { animation-delay: 8.4s; }
-    .bounce-char:nth-child(16) { animation-delay: 9.0s; }
-    .bounce-char:nth-child(17) { animation-delay: 9.6s; }
-    .bounce-char:nth-child(18) { animation-delay: 10.2s; }
-    .bounce-char:nth-child(19) { animation-delay: 10.8s; }
-    .bounce-char:nth-child(20) { animation-delay: 11.4s; }
-    .bounce-char:nth-child(21) { animation-delay: 12.0s; }
-    .bounce-char:nth-child(22) { animation-delay: 12.6s; }
-    .bounce-char:nth-child(23) { animation-delay: 13.2s; }
-    .bounce-char:nth-child(24) { animation-delay: 13.8s; }
-    
-    @keyframes titleSlideUp {
-        0% {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* 載入進度動畫 */
-    .startup-loading {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        animation: loadingFadeIn 2.2s ease-out 0.9s both;
-    }
-    
-    .loading-text {
-        font-size: 1.1em;
-        margin-right: 10px;
-    }
-    
-    .loading-dots {
-        display: flex;
-        gap: 5px;
-    }
-    
-    .loading-dot {
-        width: 8px;
-        height: 8px;
-        background-color: white;
-        border-radius: 50%;
-        animation: dotPulse 1.4s ease-in-out infinite;
-    }
-    
-    .loading-dot:nth-child(1) { animation-delay: 0s; }
-    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-    
-    @keyframes dotPulse {
-        0%, 60%, 100% {
-            opacity: 0.3;
-            transform: scale(0.8);
-        }
-        30% {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-    
-    @keyframes loadingFadeIn {
-        0% {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* 轉場動畫覆蓋層 */
-    .page-transition-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(245, 245, 245, 0.95);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-    }
-    
-    .page-transition-overlay.show {
-        display: flex;
-    }
-    
-    /* 載入動畫 */
-    .loading-spinner {
-        width: 80px;
-        height: 80px;
-        border: 8px solid #e8e8e8;
-        border-top: 8px solid #9e9e9e;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    @keyframes charBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-0.2cm); }
     }
     
     /* 隐藏顶部白色条 */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    
-    .stApp > header {
-        display: none !important;
-    }
-    
-    /* 輸入欄樣式 */
-    .stTextInput > div > div > input {
-        background-color: #f0f0f0;
-        border: 2px solid #9e9e9e;
-        border-radius: 25px;
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    
-    /* 場館卡片樣式 */
-    .venue-card {
-        background-color: #f8f8f8;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        border-left: 4px solid #9e9e9e;
-    }
-    
-    /* 標題樣式 */
-    h1, h2, h3 {
-        color: #424242;
-    }
-    
-    /* 按鈕點擊效果 */
-    .stButton > button {
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    /* ===== 啟動動畫響應式設計 ===== */
-    
-    /* 手機設備 */
-    @media only screen and (max-width: 768px) {
-        .startup-title-compact {
-            font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
-            width: 98vw !important;
-            letter-spacing: 0px !important;
-            transform: translate(-50%, calc(-50% + 3cm)) !important;
-        }
-        
-        .startup-logo {
-            max-width: 95vw !important;
-            max-height: 70vh !important;
-        }
-        
-        .app-startup-overlay {
-            padding: 10px !important;
-        }
-    }
-    
-    /* 平板設備 */
-    @media only screen and (min-width: 769px) and (max-width: 1024px) {
-        .startup-title-compact {
-            font-size: clamp(0.6rem, 1.9vw, 0.9rem) !important;
-            width: 95vw !important;
-            transform: translate(-50%, calc(-50% + 4cm)) !important;
-        }
-        
-        .startup-logo {
-            max-width: 90vw !important;
-            max-height: 80vh !important;
-        }
-    }
-    
-    /* 超小螢幕設備 */
-    @media only screen and (max-width: 480px) {
-        .startup-title-compact {
-            font-size: clamp(0.4rem, 2.8vw, 0.7rem) !important;
-            width: 99vw !important;
-            letter-spacing: 0px !important;
-            transform: translate(-50%, calc(-50% + 2.5cm)) !important;
-        }
-        
-        .startup-logo {
-            max-width: 98vw !important;
-            max-height: 60vh !important;
-        }
-        
-        .bounce-char {
-            animation-duration: 0.4s !important;
-        }
-    }
-    
-    /* 大螢幕設備 */
-    @media only screen and (min-width: 1200px) {
-        .startup-title-compact {
-            font-size: 0.9rem !important;
-            max-width: 800px !important;
-        }
-        
-        .startup-logo {
-            max-width: 80vw !important;
-            max-height: 85vh !important;
-        }
-    }
-    
-    /* 橫向模式優化 */
-    @media only screen and (orientation: landscape) and (max-height: 600px) {
-        .startup-title-compact {
-            transform: translate(-50%, calc(-50% + 2cm)) !important;
-            font-size: clamp(0.5rem, 1.5vw, 0.8rem) !important;
-        }
-        
-        .startup-logo {
-            max-height: 60vh !important;
-        }
-    }
-    
-    /* 全域響應式設定 */
-    .app-startup-overlay {
-        overflow: hidden;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .startup-logo-container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+    header[data-testid="stHeader"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -469,19 +127,16 @@ with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
 import base64
 logo_base64 = base64.b64encode(logo_data).decode()
 
-# 完整的启动页面HTML - 美丽的动画效果
+# 完整的启动页面HTML
 startup_html = f'''
 <div id="appStartup" class="app-startup-overlay" style="display: flex !important;">
-    <div class="startup-logo-container">
-        <img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo">
-    </div>
+    <img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo">
     <div class="startup-title-compact">
         <span class="bounce-char">尋</span><span class="bounce-char">地</span><span class="bounce-char">寳</span><span class="bounce-char"> </span><span class="bounce-char">-</span><span class="bounce-char"> </span><span class="bounce-char">根</span><span class="bounce-char">據</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">節</span><span class="bounce-char">奏</span><span class="bounce-char">，</span><span class="bounce-char">找</span><span class="bounce-char">到</span><span class="bounce-char">最</span><span class="bounce-char">適</span><span class="bounce-char">合</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">運</span><span class="bounce-char">動</span><span class="bounce-char">場</span><span class="bounce-char">所</span>
     </div>
 </div>
 
 <script>
-// 3秒后自动隐藏启动画面
 setTimeout(function() {{
     var overlay = document.getElementById('appStartup');
     if (overlay) {{
@@ -497,7 +152,7 @@ st.markdown(startup_html, unsafe_allow_html=True)
 # 等待3.5秒显示启动动画
 time.sleep(3.5)
 
-# 初始化必要的session state（但不强制认证）
+# 初始化session state
 if 'current_sport_icon' not in st.session_state:
     st.session_state.current_sport_icon = 0
 if 'selected_district' not in st.session_state:

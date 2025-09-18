@@ -37,7 +37,7 @@ def load_venues_data():
         
         for idx, row in raw_data.iterrows():
             venue = {
-                'id': idx + 1,
+                'id': int(idx) + 1,
                 'name': str(row['name']).strip() if pd.notna(row['name']) else '',
                 'district': str(row['district']).strip() if pd.notna(row['district']) else '',
                 'address': str(row['address']).strip() if pd.notna(row['address']) else '',
@@ -203,7 +203,7 @@ class DataManager:
             
             for idx, row in raw_data.iterrows():
                 venue = {
-                    'id': idx + 1,
+                    'id': int(idx) + 1,
                     'name': str(row['name']).strip() if pd.notna(row['name']) else '',
                     'district': str(row['district']).strip() if pd.notna(row['district']) else '',
                     'address': str(row['address']).strip() if pd.notna(row['address']) else '',
@@ -243,7 +243,7 @@ class DataManager:
             'contact_phone', 'opening_hours', 'website',
             'latitude', 'longitude', 'venue_scale', 'courses', 'photos'
         ]
-        self.venues_data = pd.DataFrame(columns=column_names)
+        self.venues_data = pd.DataFrame(columns=column_names).astype(object)
         self._update_available_options()
     
     def _normalize_sport_type(self, sport_type):
