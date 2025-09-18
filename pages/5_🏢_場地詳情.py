@@ -124,7 +124,7 @@ if venue_id:
                             st.write(review['comment'])
                         with col2:
                             st.metric("評分", f"{review['rating']}/5")
-                            st.caption(f"{review.get('date', review.get('created_at', ''))}")
+                            st.caption(f"{review['created_at']}")
                         st.divider()
             else:
                 st.info("暫無評論，成為第一個評論的用戶吧！")
