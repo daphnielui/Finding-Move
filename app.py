@@ -357,84 +357,76 @@ st.markdown("""
 
 # ===== 启动页面逻辑 =====
 
-# 初始化认证状态
-if 'is_authenticated' not in st.session_state:
-    st.session_state.is_authenticated = False
+# 每次都重置认证状态，确保启动动画总是显示
+st.session_state.is_authenticated = False
+st.session_state.data_ready = False
 
-if 'data_ready' not in st.session_state:
-    st.session_state.data_ready = False
+# 显示启动页面和数据载入
+# 显示启动动画
+st.markdown('<div id="appStartup" class="app-startup-overlay" style="display: flex !important;">', unsafe_allow_html=True)
 
-# 如果尚未认证，显示启动页面和数据载入
-if not st.session_state.is_authenticated:
-    # 显示启动动画
-    st.markdown('<div id="appStartup" class="app-startup-overlay" style="display: flex !important;">', unsafe_allow_html=True)
-    
-    # 显示启动logo
-    with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
-        logo_data = f.read()
-    
-    # 编码为base64
-    import base64
-    logo_base64 = base64.b64encode(logo_data).decode()
-    
-    st.markdown(f'''
-    <img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo" style="max-width: 90vw; max-height: 50vh; width: auto; height: auto;">
-    <div class="startup-title-compact">
-        <span class="bounce-char">尋</span><span class="bounce-char">地</span><span class="bounce-char">寳</span><span class="bounce-char"> </span><span class="bounce-char">-</span><span class="bounce-char"> </span><span class="bounce-char">根</span><span class="bounce-char">據</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">節</span><span class="bounce-char">奏</span><span class="bounce-char">，</span><span class="bounce-char">找</span><span class="bounce-char">到</span><span class="bounce-char">最</span><span class="bounce-char">適</span><span class="bounce-char">合</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">運</span><span class="bounce-char">動</span><span class="bounce-char">場</span><span class="bounce-char">所</span>
-    </div>
-    ''', unsafe_allow_html=True)
-    
-    # 显示进度条和数据载入
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    
-    # 模拟数据载入过程
-    status_text.text("正在初始化系统...")
-    progress_bar.progress(20)
-    time.sleep(0.5)
-    
-    status_text.text("載入場地資料...")
-    progress_bar.progress(40)
-    # 初始化数据管理器
-    if 'data_manager' not in st.session_state:
-        st.session_state.data_manager = DataManager()
-    time.sleep(0.5)
-    
-    status_text.text("載入天氣資料...")
-    progress_bar.progress(60)
-    # 初始化天气管理器
-    if 'weather_manager' not in st.session_state:
-        st.session_state.weather_manager = WeatherManager()
-    time.sleep(0.5)
-    
-    status_text.text("建立推薦引擎...")
-    progress_bar.progress(80)
-    # 初始化推荐引擎
-    if 'recommendation_engine' not in st.session_state:
-        st.session_state.recommendation_engine = RecommendationEngine()
-    time.sleep(0.5)
-    
-    status_text.text("系統準備完成！")
-    progress_bar.progress(100)
-    time.sleep(0.5)
-    
-    # 初始化其他session state
-    if 'current_sport_icon' not in st.session_state:
-        st.session_state.current_sport_icon = 0
-    if 'selected_district' not in st.session_state:
-        st.session_state.selected_district = '中正區'
-    if 'user_location' not in st.session_state:
-        st.session_state.user_location = None
-    
-    # 设置认证标志
-    st.session_state.is_authenticated = True
-    st.session_state.data_ready = True
-    
-    # 自动跳转到主页面
-    st.markdown('</div>', unsafe_allow_html=True)
-    time.sleep(0.5)
-    st.switch_page("pages/1_🔍_場地搜尋.py")
+# 显示启动logo
+with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
+    logo_data = f.read()
 
-else:
-    # 如果已认证，直接跳转到主页面
-    st.switch_page("pages/1_🔍_場地搜尋.py")
+# 编码为base64
+import base64
+logo_base64 = base64.b64encode(logo_data).decode()
+
+st.markdown(f'''
+<img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo" style="max-width: 90vw; max-height: 50vh; width: auto; height: auto;">
+<div class="startup-title-compact">
+    <span class="bounce-char">尋</span><span class="bounce-char">地</span><span class="bounce-char">寳</span><span class="bounce-char"> </span><span class="bounce-char">-</span><span class="bounce-char"> </span><span class="bounce-char">根</span><span class="bounce-char">據</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">節</span><span class="bounce-char">奏</span><span class="bounce-char">，</span><span class="bounce-char">找</span><span class="bounce-char">到</span><span class="bounce-char">最</span><span class="bounce-char">適</span><span class="bounce-char">合</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">運</span><span class="bounce-char">動</span><span class="bounce-char">場</span><span class="bounce-char">所</span>
+</div>
+''', unsafe_allow_html=True)
+
+# 显示进度条和数据载入
+progress_bar = st.progress(0)
+status_text = st.empty()
+
+# 模拟数据载入过程
+status_text.text("正在初始化系统...")
+progress_bar.progress(20)
+time.sleep(0.5)
+
+status_text.text("載入場地資料...")
+progress_bar.progress(40)
+# 初始化数据管理器
+if 'data_manager' not in st.session_state:
+    st.session_state.data_manager = DataManager()
+time.sleep(0.5)
+
+status_text.text("載入天氣資料...")
+progress_bar.progress(60)
+# 初始化天气管理器
+if 'weather_manager' not in st.session_state:
+    st.session_state.weather_manager = WeatherManager()
+time.sleep(0.5)
+
+status_text.text("建立推薦引擎...")
+progress_bar.progress(80)
+# 初始化推荐引擎
+if 'recommendation_engine' not in st.session_state:
+    st.session_state.recommendation_engine = RecommendationEngine()
+time.sleep(0.5)
+
+status_text.text("系統準備完成！")
+progress_bar.progress(100)
+time.sleep(0.5)
+
+# 初始化其他session state
+if 'current_sport_icon' not in st.session_state:
+    st.session_state.current_sport_icon = 0
+if 'selected_district' not in st.session_state:
+    st.session_state.selected_district = '中正區'
+if 'user_location' not in st.session_state:
+    st.session_state.user_location = None
+
+# 设置认证标志
+st.session_state.is_authenticated = True
+st.session_state.data_ready = True
+
+# 自动跳转到主页面
+st.markdown('</div>', unsafe_allow_html=True)
+time.sleep(0.5)
+st.switch_page("pages/1_🔍_場地搜尋.py")
