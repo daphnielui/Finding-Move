@@ -26,7 +26,7 @@ if 'startup_done' not in st.session_state:
     startup_html = f'''
     <div id="appStartup" class="app-startup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: linear-gradient(135deg, #a6bee2 0%, #8fadd9 100%); z-index: 99999; display: flex !important; justify-content: center; align-items: center; flex-direction: column; color: white;">
         <div style="text-align: center;">
-            <img src="data:image/jpeg;base64,{logo_base64}" style="max-width: 200px; max-height: 200px; margin-bottom: 30px; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
+            <img src="data:image/jpeg;base64,{logo_base64}" style="max-width: 300px; max-height: 300px; margin-bottom: 30px; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
             <div style="font-size: 1.2em; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
                 <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.1s;">地</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.2s;">寳</span>
                 <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.3s;"> - </span>
