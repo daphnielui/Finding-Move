@@ -357,15 +357,12 @@ st.markdown("""
 
 # ===== 启动页面逻辑 =====
 
-# 使用時間戳來偵測是否為新的會話或頁面刷新
-import datetime
-current_time = datetime.datetime.now()
-
-# 如果沒有最後載入時間，或距離上次載入超過5秒，則重置認證狀態
-if 'last_load_time' not in st.session_state or (current_time - st.session_state.last_load_time).seconds > 5:
+# 初始化认证状态
+if 'is_authenticated' not in st.session_state:
     st.session_state.is_authenticated = False
+
+if 'data_ready' not in st.session_state:
     st.session_state.data_ready = False
-    st.session_state.last_load_time = current_time
 
 # 如果尚未认证，显示启动页面和数据载入
 if not st.session_state.is_authenticated:
