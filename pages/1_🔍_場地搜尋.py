@@ -14,8 +14,8 @@ st.set_page_config(
 
 # 启动动画逻辑 - 如果是首次访问，显示启动动画
 if 'startup_done' not in st.session_state:
-    # 读取logo文件
-    with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
+    # 读取logo文件 (使用高质量投影片版本)
+    with open('attached_assets/stock_images/finding_move_logo_hi_65808ab7.jpg', 'rb') as f:
         logo_data = f.read()
     
     # 编码为base64
@@ -25,12 +25,10 @@ if 'startup_done' not in st.session_state:
     # 显示启动动画
     startup_html = f'''
     <div id="appStartup" class="app-startup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 99999; display: flex !important;">
-        <img src="data:image/jpeg;base64,{logo_base64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
+        <img src="data:image/jpeg;base64,{logo_base64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; animation: logoFadeIn 1.5s ease-out; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;" alt="Finding Move Logo">
         <div class="text-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 4.5cm)); text-align: center; z-index: 1; color: white;">
-            <div style="font-size: 1.5em; font-weight: bold;">
-                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.1s;">地</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.2s;">寳</span>
-                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.3s;"> - </span>
-                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.4s;">根</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.5s;">據</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.8s;">節</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.9s;">奏</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.0s;">，</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.1s;">找</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.2s;">到</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.3s;">最</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.4s;">適</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.5s;">合</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.8s;">運</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.9s;">動</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.0s;">場</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.1s;">所</span>
+            <div style="font-size: 0.9em; font-weight: bold; white-space: nowrap;">
+                <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.1s;">地</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.2s;">寳</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.3s;"> - </span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.4s;">根</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.5s;">據</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.8s;">節</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.9s;">奏</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.0s;">，</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.1s;">找</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.2s;">到</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.3s;">最</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.4s;">適</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.5s;">合</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.6s;">您</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.7s;">的</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.8s;">運</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 1.9s;">動</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.0s;">場</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 2.1s;">所</span>
             </div>
         </div>
     </div>
@@ -395,9 +393,10 @@ st.markdown("""
         
         /* 启动动画响应式 */
         #appStartup .text-overlay {
-            font-size: 1em !important;
+            font-size: 0.7em !important;
             transform: translate(-50%, calc(-50% + 1.5cm)) !important;
             padding: 0 10px !important;
+            white-space: nowrap !important;
         }
     }
     
