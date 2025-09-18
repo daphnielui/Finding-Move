@@ -164,27 +164,27 @@ if hasattr(st, 'query_params') and st.query_params.get('district'):
     if current_district in available_districts:
         st.session_state.selected_district = current_district
 
-# 主標題區域 - 包含logo和位置選擇器
-st.markdown('<div class="main-header">', unsafe_allow_html=True)
-
-# 使用兩列布局：左側logo，右側位置選擇器
-header_col1, header_col2 = st.columns([3, 2])
-
-with header_col1:
-    st.markdown(f"""
-    <div class="logo-section">
-        <div style="font-size: 2.5em;">{current_icon}</div>
-        <div>
-            <h1 style="margin: 0; font-size: 2em;">台北運動場地搜尋引擎</h1>
-            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 1.1em;">找到最適合您的運動場地</p>
+# 簡潔的標題區域 - 移除蓝色背景
+st.markdown(f"""
+<div style="padding: 20px 0; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 2.5em;">{current_icon}</div>
+            <div>
+                <h1 style="margin: 0; font-size: 2em; color: #424242;">台北運動場地搜尋引擎</h1>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 1.1em;">找到最適合您的運動場地</p>
+            </div>
+        </div>
+        <div style="min-width: 200px;">
+            {st.session_state.selected_district}
         </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
-with header_col2:
-    st.markdown('<div class="location-selector-inline">', unsafe_allow_html=True)
-    
-    # 區域選擇下拉選單
+# 位置选择器（简化版，去除蓝色背景）
+col1, col2, col3 = st.columns([2, 1, 1])
+with col2:
     selected_district = st.selectbox(
         "📍 選擇位置",
         available_districts,
@@ -196,17 +196,12 @@ with header_col2:
     # 檢查是否有變更
     if selected_district != st.session_state.selected_district:
         st.session_state.selected_district = selected_district
-        # 使用query_params來觸發頁面重新載入
         st.query_params["district"] = selected_district
         st.rerun()
-    
-    # 自動定位按鈕
+
+with col3:
     if st.button("🎯 自動定位", help="使用GPS自動選擇最近的行政區"):
         st.info("請在瀏覽器中允許定位權限")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # ===== 天氣資訊區塊 =====
 # 獲取選擇的區域
@@ -238,39 +233,7 @@ exercise_advice = get_exercise_advice(
     weather_info['precipitation_probability']
 )
 
-st.markdown(f"""
-<div class="weather-block">
-    <h2>🌤️ {selected_district} 即時天氣</h2>
-    <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
-        <div>
-            <div style="font-size: 3em;">{weather_icon}</div>
-            <div style="font-size: 1.8em; font-weight: bold;">{weather_info['temperature']}°C</div>
-            <div style="font-size: 1.1em;">{weather_info['weather_description']}</div>
-        </div>
-        <div>
-            <div style="font-size: 2em;">💨</div>
-            <div style="font-size: 1.1em;">{weather_info['wind_direction']} {weather_info['wind_speed']}級</div>
-            <div style="font-size: 1.1em;">濕度 {weather_info['humidity']}%</div>
-        </div>
-        <div>
-            <div style="font-size: 2em;">📍</div>
-            <div style="font-weight: bold; font-size: 1.2em;">台北市</div>
-            <div style="font-size: 1.1em; color: #ffeb3b;">{weather_info['district']}</div>
-        </div>
-    </div>
-    <div style="margin-top: 15px; font-size: 1em; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
-        <strong>{exercise_advice}</strong>
-    </div>
-    <div style="margin-top: 10px; font-size: 0.9em; display: flex; justify-content: space-between;">
-        <span>🌡️ 體感 {weather_info['apparent_temperature']}°C</span>
-        <span>🌧️ 降雨 {weather_info['precipitation_probability']}%</span>
-        <span>😊 {weather_info['comfort_index']}</span>
-    </div>
-    <div style="margin-top: 8px; font-size: 0.8em; opacity: 0.8; text-align: center;">
-        更新時間: {weather_info['update_time']}
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# 移除蓝色天气区块 - 用户不需要在搜索引擎上方显示
 
 # ===== 搜尋功能區塊 =====
 st.markdown('<div class="search-block">', unsafe_allow_html=True)
