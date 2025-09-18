@@ -28,7 +28,7 @@ if 'startup_done' not in st.session_state:
         <div style="text-align: center;">
             <img src="data:image/jpeg;base64,{logo_base64}" style="max-width: 200px; max-height: 200px; margin-bottom: 30px; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
             <div style="font-size: 1.5em; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-                <span style="display: inline-block; animation: charBounce 0.8s ease-in-out infinite 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.8s ease-in-out infinite 0.2s;">地</span><span style="display: inline-block; animation: charBounce 0.8s ease-in-out infinite 0.4s;">寶</span>
+                <span style="display: inline-block; animation: charCycleBounce 1.2s ease-in-out infinite 0s;">尋</span><span style="display: inline-block; animation: charCycleBounce 1.2s ease-in-out infinite 0.4s;">地</span><span style="display: inline-block; animation: charCycleBounce 1.2s ease-in-out infinite 0.8s;">寶</span>
             </div>
         </div>
     </div>
@@ -38,25 +38,46 @@ if 'startup_done' not in st.session_state:
             0% {{ opacity: 0; transform: scale(0.8) translateY(20px); }}
             100% {{ opacity: 1; transform: scale(1) translateY(0); }}
         }}
-        @keyframes charBounce {{
+        @keyframes charCycleBounce {{
             0% {{ transform: translateY(0); }}
-            50% {{ transform: translateY(-10px); }}
+            8% {{ transform: translateY(-12px); }}
+            16% {{ transform: translateY(0); }}
             100% {{ transform: translateY(0); }}
         }}
         header[data-testid="stHeader"] {{ display: none !important; }}
     </style>
     
     <script>
-        setTimeout(function() {{
-            var overlay = document.getElementById('appStartup');
-            if (overlay) {{
-                overlay.style.opacity = '0';
-                overlay.style.transition = 'opacity 0.8s ease-out';
-                setTimeout(function() {{
-                    overlay.style.display = 'none';
-                }}, 800);
-            }}
-        }}, 3000);
+        // 确保页面完全加载后执行
+        document.addEventListener('DOMContentLoaded', function() {{
+            setTimeout(function() {{
+                var overlay = document.getElementById('appStartup');
+                if (overlay) {{
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.8s ease-out';
+                    setTimeout(function() {{
+                        overlay.style.display = 'none';
+                    }}, 800);
+                }}
+            }}, 3000);
+        }});
+        
+        // 备用方案：如果DOM已经加载，立即执行
+        if (document.readyState === 'loading') {{
+            // 如果文档还在加载，等待DOMContentLoaded
+        }} else {{
+            // 如果文档已经加载完成，立即执行定时器
+            setTimeout(function() {{
+                var overlay = document.getElementById('appStartup');
+                if (overlay) {{
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.8s ease-out';
+                    setTimeout(function() {{
+                        overlay.style.display = 'none';
+                    }}, 800);
+                }}
+            }}, 3000);
+        }}
     </script>
     '''
     
