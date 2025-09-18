@@ -355,5 +355,55 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 直接跳转到主页面，无需启动动画
+# ===== 启动页面逻辑 =====
+
+# 读取logo文件
+with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
+    logo_data = f.read()
+
+# 编码为base64
+import base64
+logo_base64 = base64.b64encode(logo_data).decode()
+
+# 完整的启动页面HTML - 美丽的动画效果
+startup_html = f'''
+<div id="appStartup" class="app-startup-overlay" style="display: flex !important;">
+    <div class="startup-logo-container">
+        <img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo">
+    </div>
+    <div class="startup-title-compact">
+        <span class="bounce-char">尋</span><span class="bounce-char">地</span><span class="bounce-char">寳</span><span class="bounce-char"> </span><span class="bounce-char">-</span><span class="bounce-char"> </span><span class="bounce-char">根</span><span class="bounce-char">據</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">節</span><span class="bounce-char">奏</span><span class="bounce-char">，</span><span class="bounce-char">找</span><span class="bounce-char">到</span><span class="bounce-char">最</span><span class="bounce-char">適</span><span class="bounce-char">合</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">運</span><span class="bounce-char">動</span><span class="bounce-char">場</span><span class="bounce-char">所</span>
+    </div>
+</div>
+
+<script>
+// 3秒后自动隐藏启动画面，然后跳转
+setTimeout(function() {{
+    var overlay = document.getElementById('appStartup');
+    if (overlay) {{
+        overlay.classList.add('hidden');
+        setTimeout(function() {{
+            // 自动跳转到主页面
+            window.location.href = '/pages/1_🔍_場地搜尋';
+        }}, 800);
+    }}
+}}, 3000);
+</script>
+'''
+
+# 显示启动页面
+st.markdown(startup_html, unsafe_allow_html=True)
+
+# 等待3.5秒显示启动动画
+time.sleep(3.5)
+
+# 初始化必要的session state（但不强制认证）
+if 'current_sport_icon' not in st.session_state:
+    st.session_state.current_sport_icon = 0
+if 'selected_district' not in st.session_state:
+    st.session_state.selected_district = '中正區'
+if 'user_location' not in st.session_state:
+    st.session_state.user_location = None
+
+# 自动跳转到主页面
 st.switch_page("pages/1_🔍_場地搜尋.py")
