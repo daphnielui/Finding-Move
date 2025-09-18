@@ -12,12 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ===== 认证守卫 =====
-if not st.session_state.get("is_authenticated"):
-    st.warning("请先通过启动页面初始化系统")
-    if st.button("返回启动页面"):
-        st.switch_page("app.py")
-    st.stop()
+# 认证守卫已移除
 
 # 自定義灰藍色主題CSS
 st.markdown("""

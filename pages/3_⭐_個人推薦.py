@@ -10,12 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ===== 认证守卫 =====
-if not st.session_state.get("is_authenticated"):
-    st.warning("请先通过启动页面初始化系统")
-    if st.button("返回启动页面"):
-        st.switch_page("app.py")
-    st.stop()
+# 认证守卫已移除
 
 # 確保 session state 已初始化
 if 'data_manager' not in st.session_state:
