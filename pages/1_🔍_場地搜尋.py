@@ -26,7 +26,7 @@ if 'startup_done' not in st.session_state:
     startup_html = f'''
     <div id="appStartup" class="app-startup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 99999; display: flex !important;">
         <img src="data:image/jpeg;base64,{logo_base64}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; animation: logoFadeIn 1.5s ease-out;" alt="Finding Move Logo">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 4.5cm)); text-align: center; z-index: 1; color: white;">
+        <div class="text-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, calc(-50% + 4.5cm)); text-align: center; z-index: 1; color: white;">
             <div style="font-size: 1.5em; font-weight: bold;">
                 <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0s;">尋</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.1s;">地</span><span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.2s;">寳</span>
                 <span style="display: inline-block; animation: charBounce 0.6s ease-in-out 0.3s;"> - </span>
@@ -46,6 +46,47 @@ if 'startup_done' not in st.session_state:
             100% {{ transform: translateY(0); }}
         }}
         header[data-testid="stHeader"] {{ display: none !important; }}
+        
+        /* 响应式设计 - 手机设备 */
+        @media only screen and (max-width: 768px) {{
+            #appStartup img {{
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+            }}
+            #appStartup .text-overlay {{
+                font-size: 1.2em !important;
+                transform: translate(-50%, calc(-50% + 2cm)) !important;
+                padding: 0 10px !important;
+                line-height: 1.3 !important;
+            }}
+        }}
+        
+        /* 响应式设计 - 平板设备 */
+        @media only screen and (min-width: 769px) and (max-width: 1024px) {{
+            #appStartup img {{
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+            }}
+            #appStartup .text-overlay {{
+                font-size: 1.4em !important;
+                transform: translate(-50%, calc(-50% + 3cm)) !important;
+            }}
+        }}
+        
+        /* 响应式设计 - 电脑设备 */
+        @media only screen and (min-width: 1025px) {{
+            #appStartup img {{
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+            }}
+            #appStartup .text-overlay {{
+                font-size: 1.5em !important;
+                transform: translate(-50%, calc(-50% + 4.5cm)) !important;
+            }}
+        }}
     </style>
     
     <script>
@@ -92,12 +133,25 @@ if 'startup_done' not in st.session_state:
     st.session_state.startup_done = True
     st.rerun()
 
-# 自定義灰藍色主題CSS
+# 自定義灰藍色主題CSS與響應式設計
 st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=3.0">
 <style>
+    /* 响应式设计全局设置 */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
     /* 主背景顏色 */
     .stApp {
         background-color: #f8fafb;
+        width: 100%;
+        max-width: 100vw;
     }
     
     /* 主標題區域 */
@@ -195,6 +249,166 @@ st.markdown("""
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* ===== 全面响应式设计媒体查询 ===== */
+    
+    /* 手机设备 (最高优先级) */
+    @media only screen and (max-width: 768px) {
+        .stApp {
+            padding: 10px !important;
+        }
+        
+        /* 天气区块响应式 */
+        .weather-block {
+            padding: 15px !important;
+            font-size: 14px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        /* 搜索区块响应式 */
+        .search-block, .recommend-block {
+            padding: 15px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        /* 位置选择器响应式 */
+        .location-selector-fixed {
+            top: 10px !important;
+            right: 10px !important;
+            font-size: 12px !important;
+        }
+        
+        /* 文本输入框响应式 */
+        .stTextInput > div > div > input {
+            font-size: 16px !important;
+            padding: 12px !important;
+            width: 100% !important;
+        }
+        
+        /* 按钮响应式 */
+        .stButton button {
+            width: 100% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+        }
+        
+        /* 列布局响应式 */
+        [data-testid="column"] {
+            padding: 5px !important;
+        }
+        
+        /* 场地卡片响应式 */
+        .venue-card {
+            padding: 15px !important;
+            margin-bottom: 15px !important;
+            font-size: 14px !important;
+        }
+        
+        /* icon调整 */
+        .rotating-icon {
+            font-size: 20px !important;
+        }
+        
+        /* 标题响应式 */
+        h1 {
+            font-size: 1.5em !important;
+        }
+        
+        h2 {
+            font-size: 1.3em !important;
+        }
+        
+        /* Selectbox响应式 */
+        .stSelectbox > div > div {
+            font-size: 14px !important;
+        }
+    }
+    
+    /* 平板设备 */
+    @media only screen and (min-width: 769px) and (max-width: 1024px) {
+        .stApp {
+            padding: 20px !important;
+        }
+        
+        .weather-block {
+            padding: 18px !important;
+            font-size: 15px !important;
+        }
+        
+        .search-block, .recommend-block {
+            padding: 20px !important;
+        }
+        
+        .stTextInput > div > div > input {
+            font-size: 15px !important;
+        }
+        
+        .stButton button {
+            padding: 10px 15px !important;
+            font-size: 15px !important;
+        }
+        
+        h1 {
+            font-size: 1.8em !important;
+        }
+    }
+    
+    /* 大屏幕设备 */
+    @media only screen and (min-width: 1025px) {
+        .stApp {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .weather-block {
+            font-size: 16px;
+        }
+        
+        .search-block, .recommend-block {
+            padding: 25px;
+        }
+    }
+    
+    /* 超小屏幕设备优化 */
+    @media only screen and (max-width: 480px) {
+        .weather-block {
+            padding: 10px !important;
+            font-size: 12px !important;
+        }
+        
+        .search-block, .recommend-block {
+            padding: 12px !important;
+        }
+        
+        .stSelectbox > div > div {
+            font-size: 13px !important;
+        }
+        
+        h1 {
+            font-size: 1.3em !important;
+        }
+        
+        h2 {
+            font-size: 1.1em !important;
+        }
+        
+        /* 启动动画响应式 */
+        #appStartup .text-overlay {
+            font-size: 1em !important;
+            transform: translate(-50%, calc(-50% + 1.5cm)) !important;
+            padding: 0 10px !important;
+        }
+    }
+    
+    /* 全局响应式设置 */
+    * {
+        box-sizing: border-box;
+    }
+    
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
     }
 </style>
 """, unsafe_allow_html=True)
