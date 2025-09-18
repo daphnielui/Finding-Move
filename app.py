@@ -166,16 +166,16 @@ st.markdown("""
         top: 50%;
         left: 50%;
         transform: translate(-50%, calc(-50% + 4.5cm));
-        font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+        font-size: clamp(0.6rem, 1.8vw, 0.9rem);
         font-weight: normal;
         text-align: center;
         opacity: 0.9;
         white-space: nowrap;
         font-family: 'uoqmunthenkhung', 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', sans-serif;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         color: white;
-        width: 90vw;
-        max-width: 800px;
+        width: 95vw;
+        max-width: 900px;
     }
     
     /* 字符弹跳动画 - 单个字符依次跳动 */
@@ -369,9 +369,9 @@ st.markdown("""
     /* 手機設備 */
     @media only screen and (max-width: 768px) {
         .startup-title-compact {
-            font-size: clamp(0.7rem, 3.5vw, 1rem) !important;
-            width: 95vw !important;
-            letter-spacing: 0.5px !important;
+            font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
+            width: 98vw !important;
+            letter-spacing: 0px !important;
             transform: translate(-50%, calc(-50% + 3cm)) !important;
         }
         
@@ -388,8 +388,8 @@ st.markdown("""
     /* 平板設備 */
     @media only screen and (min-width: 769px) and (max-width: 1024px) {
         .startup-title-compact {
-            font-size: clamp(0.8rem, 2.8vw, 1.1rem) !important;
-            width: 90vw !important;
+            font-size: clamp(0.6rem, 1.9vw, 0.9rem) !important;
+            width: 95vw !important;
             transform: translate(-50%, calc(-50% + 4cm)) !important;
         }
         
@@ -402,8 +402,8 @@ st.markdown("""
     /* 超小螢幕設備 */
     @media only screen and (max-width: 480px) {
         .startup-title-compact {
-            font-size: clamp(0.6rem, 4vw, 0.9rem) !important;
-            width: 98vw !important;
+            font-size: clamp(0.4rem, 2.8vw, 0.7rem) !important;
+            width: 99vw !important;
             letter-spacing: 0px !important;
             transform: translate(-50%, calc(-50% + 2.5cm)) !important;
         }
@@ -421,8 +421,8 @@ st.markdown("""
     /* 大螢幕設備 */
     @media only screen and (min-width: 1200px) {
         .startup-title-compact {
-            font-size: 1.2rem !important;
-            max-width: 600px !important;
+            font-size: 0.9rem !important;
+            max-width: 800px !important;
         }
         
         .startup-logo {
@@ -435,7 +435,7 @@ st.markdown("""
     @media only screen and (orientation: landscape) and (max-height: 600px) {
         .startup-title-compact {
             transform: translate(-50%, calc(-50% + 2cm)) !important;
-            font-size: clamp(0.7rem, 2vw, 1rem) !important;
+            font-size: clamp(0.5rem, 1.5vw, 0.8rem) !important;
         }
         
         .startup-logo {
