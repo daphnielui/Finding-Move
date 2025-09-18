@@ -256,7 +256,34 @@ st.markdown("""
     /* 手机设备 (最高优先级) */
     @media only screen and (max-width: 768px) {
         .stApp {
+            padding: 5px !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* 修復主標題區域的flex布局 */
+        .main-container {
             padding: 10px !important;
+        }
+        
+        /* 標題區域手機優化 */
+        .stApp > div > div:first-child {
+            padding: 10px !important;
+        }
+        
+        /* 修复flex布局在手机上的问题 */
+        div[style*="display: flex"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+        
+        /* 修复标题区域 */
+        div[style*="justify-content: space-between"] {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
         }
         
         /* 天气区块响应式 */
@@ -293,9 +320,17 @@ st.markdown("""
             font-size: 16px !important;
         }
         
-        /* 列布局响应式 */
+        /* 列布局响应式 - 强制单列 */
         [data-testid="column"] {
+            width: 100% !important;
+            flex: none !important;
             padding: 5px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        /* 强制列容器为垂直布局 */
+        .row-widget.stHorizontal {
+            flex-direction: column !important;
         }
         
         /* 场地卡片响应式 */
@@ -322,6 +357,49 @@ st.markdown("""
         /* Selectbox响应式 */
         .stSelectbox > div > div {
             font-size: 14px !important;
+        }
+        
+        /* 修复最小宽度问题 */
+        div[style*="min-width"] {
+            min-width: unset !important;
+            width: 100% !important;
+        }
+        
+        /* 全局容器修复 */
+        .block-container {
+            padding: 10px !important;
+            max-width: 100% !important;
+        }
+        
+        /* 隐藏水平滚动 */
+        * {
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 修复Streamlit默认样式冲突 */
+        .main .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important;
+        }
+        
+        /* 强制移动设备样式 */
+        .stApp {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* 修复sidebar在手机上的问题 */
+        .css-1d391kg, .css-1aumxhk {
+            width: 100% !important;
+        }
+        
+        /* 确保没有固定宽度 */
+        div, section, .stApp > div {
+            max-width: 100% !important;
+            width: auto !important;
         }
     }
     
@@ -456,44 +534,59 @@ if hasattr(st, 'query_params') and st.query_params.get('district'):
     if current_district in available_districts:
         st.session_state.selected_district = current_district
 
-# 簡潔的標題區域 - 移除蓝色背景
+# 響應式標題區域
 st.markdown(f"""
-<div style="padding: 20px 0; margin-bottom: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 15px;">
+<div class="title-section" style="padding: 15px 0; margin-bottom: 20px;">
+    <div class="title-content" style="text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
             <div style="font-size: 2.5em;">{current_icon}</div>
             <div>
-                <h1 style="margin: 0; font-size: 2em; color: #424242;">台北運動場地搜尋引擎</h1>
-                <p style="margin: 5px 0 0 0; color: #666; font-size: 1.1em;">找到最適合您的運動場地</p>
+                <h1 style="margin: 0; font-size: 1.8em; color: #424242;">台北運動場地搜尋引擎</h1>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 1em;">找到最適合您的運動場地</p>
             </div>
         </div>
-        <div style="min-width: 200px;">
-            {st.session_state.selected_district}
+        <div style="text-align: center; color: #666;">
+            目前選擇：{st.session_state.selected_district}
         </div>
     </div>
 </div>
+
+<style>
+@media only screen and (max-width: 768px) {{
+    .title-section h1 {{
+        font-size: 1.3em !important;
+    }}
+    .title-section p {{
+        font-size: 0.9em !important;
+    }}
+    .title-section > div {{
+        text-align: center !important;
+    }}
+    .title-section div[style*="display: flex"] {{
+        flex-direction: column !important;
+        gap: 10px !important;
+    }}
+}}
+</style>
 """, unsafe_allow_html=True)
 
-# 位置选择器（简化版，去除蓝色背景）
-col1, col2, col3 = st.columns([2, 1, 1])
-with col2:
-    selected_district = st.selectbox(
-        "📍 選擇位置",
-        available_districts,
-        index=available_districts.index(st.session_state.selected_district) if st.session_state.selected_district in available_districts else 0,
-        key="district_selector",
-        help="選擇您所在的台北市行政區"
-    )
-    
-    # 檢查是否有變更
-    if selected_district != st.session_state.selected_district:
-        st.session_state.selected_district = selected_district
-        st.query_params["district"] = selected_district
-        st.rerun()
+# 簡化版位置选择器 - 響應式設計
+selected_district = st.selectbox(
+    "📍 選擇位置",
+    available_districts,
+    index=available_districts.index(st.session_state.selected_district) if st.session_state.selected_district in available_districts else 0,
+    key="district_selector",
+    help="選擇您所在的台北市行政區"
+)
 
-with col3:
-    if st.button("🎯 自動定位", help="使用GPS自動選擇最近的行政區"):
-        st.info("請在瀏覽器中允許定位權限")
+if st.button("🎯 自動定位", help="使用GPS自動選擇最近的行政區"):
+    st.info("請在瀏覽器中允許定位權限")
+
+# 檢查是否有變更
+if selected_district != st.session_state.selected_district:
+    st.session_state.selected_district = selected_district
+    st.query_params["district"] = selected_district
+    st.rerun()
 
 # ===== 天氣資訊區塊 =====
 # 獲取選擇的區域

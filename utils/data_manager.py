@@ -571,3 +571,59 @@ class DataManager:
         popular_searches.extend(common_searches)
         
         return popular_searches[:10]  # 返回前10個熱門搜尋
+    
+    def get_venue_reviews(self, venue_id: int) -> List[Dict[str, Any]]:
+        """
+        獲取場地評論（模擬數據）
+        
+        Args:
+            venue_id: 場地ID
+            
+        Returns:
+            評論列表
+        """
+        import random
+        from datetime import datetime, timedelta
+        
+        # 生成模擬評論數據
+        reviews = []
+        review_count = random.randint(3, 10)
+        
+        for i in range(review_count):
+            # 隨機生成評論內容
+            comments = [
+                "這個場地設施很完善，環境也很好！",
+                "位置方便，停車也很容易。",
+                "教練很專業，服務態度很好。", 
+                "價格合理，性價比很高。",
+                "場地乾淨整潔，器材維護得很好。",
+                "預約很方便，工作人員很親切。",
+                "適合全家一起運動的好地方。",
+                "交通便利，設備新穎。"
+            ]
+            
+            # 隨機生成用戶名稱
+            usernames = [
+                "運動愛好者", "健身達人", "羽球高手", "游泳健將", 
+                "籃球迷", "瑜伽老師", "跑步狂", "網球好手"
+            ]
+            
+            # 隨機日期（最近30天內）
+            random_date = datetime.now() - timedelta(days=random.randint(1, 30))
+            
+            review = {
+                'id': f"review_{venue_id}_{i+1}",
+                'user_name': random.choice(usernames),
+                'rating': random.randint(3, 5),
+                'comment': random.choice(comments),
+                'date': random_date.strftime('%Y-%m-%d'),
+                'created_at': random_date.strftime('%Y-%m-%d'),
+                'helpful_count': random.randint(0, 15)
+            }
+            
+            reviews.append(review)
+        
+        # 依據評分和日期排序
+        reviews.sort(key=lambda x: (x['rating'], x['date']), reverse=True)
+        
+        return reviews
