@@ -12,7 +12,7 @@ def load_venues_data():
     """
     try:
         # 讀取CSV檔案
-        csv_path = "attached_assets/finding move - main (1)_1757915289189.csv"
+        csv_path = ASSETS / "finding move - main (1)_1757915289189.csv"
         
         if not os.path.exists(csv_path):
             print(f"CSV檔案不存在: {csv_path}")
