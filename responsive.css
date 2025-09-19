@@ -1,123 +1,110 @@
-/* 全域響應式設計 - 統一管理所有頁面 */
+/* 全域響應式設計 - 統一管理所有頁面  */
 
 /* 基礎重置 */
-* {
-    box-sizing: border-box;
-}
-
+* { box-sizing: border-box; }
 html, body {
-    width: 100%;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0; padding: 0;
 }
 
-/* 應用容器 */
+/* 應用容器（桌機中央置中、控制最大寬度） */
 .stApp {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-/* 響應式媒體查詢 */
+/* 影像：維持等比例，不超出容器 */
+img, svg, canvas, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 文字：以 clamp 作響應式縮放 */
+h1 { font-size: clamp(1.5rem, 3.5vw, 2.4rem) !important; }
+h2 { font-size: clamp(1.25rem, 3vw, 1.8rem) !important; }
+h3 { font-size: clamp(1.05rem, 2.5vw, 1.4rem) !important; }
+p, span, div { font-size: clamp(.95rem, 1.5vw, 1.05rem); }
+
+/* 側邊欄：使用穩定的 data-testid 選擇器（避免 .css-xxxx 失效） */
+[data-testid="stSidebar"] {
+  /* 桌機預設寬度由 Streamlit 管；在小螢幕再調整 */
+}
+
+/* Plotly/Folium 容器：寬度自適應 */
+.js-plotly-plot { width: 100% !important; }
+iframe[title="st.iframe"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  border: 0; border-radius: 8px;
+}
+
+/* ---------------- 手機與平板響應式 ---------------- */
+
+@media screen and (max-width: 1024px) {
+  .stApp { padding: 15px !important; }
+  iframe[title="st.iframe"] { height: 500px !important; }
+}
+
 @media screen and (max-width: 768px) {
-    .stApp {
-        padding: 10px !important;
-    }
-    
-    /* 標題 */
-    h1 { font-size: clamp(1.2rem, 4vw, 2rem) !important; }
-    h2 { font-size: clamp(1rem, 3vw, 1.5rem) !important; }
-    h3 { font-size: clamp(0.9rem, 2.5vw, 1.2rem) !important; }
+  .stApp { padding: 10px !important; }
 
-    
-    /* 按鈕 */
-    .stButton > button {
-        width: 100% !important;
-        padding: 12px !important;
-        font-size: 16px !important;
-    }
-    
-    /* 輸入框 */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > div {
-        font-size: 16px !important;
-        padding: 12px !important;
-    }
-    
-    /* 欄位 */
-    [data-testid="column"] {
-        width: 100% !important;
-        padding: 5px !important;
-    }
-    
-    /* 側邊欄 */
-    [data-testid="stSidebar"] { 
-        width: 100% !important;
-    }
+  /* 標題大小（再次縮小） */
+  h1 { font-size: clamp(1.25rem, 5vw, 1.8rem) !important; }
+  h2 { font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important; }
+  h3 { font-size: clamp(1rem, 4vw, 1.25rem) !important; }
 
-    
-    /* 標籤頁 */
-    .stTabs [data-baseweb="tab-list"] button {
-        font-size: 14px !important;
-        padding: 8px !important;
-    }
-    
-    /* 圖表 */
-    .js-plotly-plot {
-        width: 100% !important;
-    }
-    
-    /* 地圖 */
-    iframe[title="st.iframe"] {
-        width: 100% !important;
-        height: 400px !important;
-    }
+  /* 按鈕與輸入元件：更好點擊 */
+  .stButton > button {
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 16px !important;
+  }
+  .stTextInput > div > div > input,
+  .stSelectbox > div > div > div {
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
 
+  /* 欄位：小螢幕改為單欄（只在 ≤768px 生效） */
+  [data-testid="column"] {
+    flex: 1 1 100% !important;
+    padding: 5px !important;
+  }
+
+  /* 側邊欄：小螢幕寬度全滿 */
+  [data-testid="stSidebar"] { width: 100% !important; }
+
+  /* 標籤頁 */
+  .stTabs [data-baseweb="tab-list"] button {
+    font-size: 14px !important; padding: 8px !important;
+  }
+
+  /* 地圖高度（手機） */
+  iframe[title="st.iframe"] { height: 400px !important; }
 }
 
 @media screen and (max-width: 480px) {
-    .stApp {
-        padding: 5px !important;
-    }
-    
-    h1 { font-size: clamp(1.2rem, 4vw, 2rem) !important; }
-    h2 { font-size: clamp(1rem, 3vw, 1.5rem) !important; }
-    h3 { font-size: clamp(0.9rem, 2.5vw, 1.2rem) !important; }
-
-    
-    iframe {
-        height: 350px !important;
-    }
+  .stApp { padding: 6px !important; }
+  iframe[title="st.iframe"] { height: 350px !important; }
 }
 
-@media screen and (min-width: 769px) and (max-width: 1024px) {
-    .stApp {
-        padding: 15px !important;
-    }
-    
-    iframe {
-        height: 500px !important;
-    }
-}
-
-/* 啟動動畫響應式 */
+/* 啟動動畫標題（你的自訂 class） */
 .startup-title-compact {
-    font-size: clamp(0.6rem, 1.8vw, 0.9rem) !important;
-    width: 95vw !important;
-    white-space: nowrap !important;
+  font-size: clamp(0.6rem, 1.8vw, 0.9rem) !important;
+  width: 95vw !important;
+  white-space: nowrap !important;
 }
-
 @media screen and (max-width: 768px) {
-    .startup-title-compact {
-        font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
-        width: 98vw !important;
-    }
+  .startup-title-compact {
+    font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
+    width: 98vw !important;
+  }
 }
-
 @media screen and (max-width: 480px) {
-    .startup-title-compact {
-        font-size: clamp(0.4rem, 2.8vw, 0.7rem) !important;
-        width: 99vw !important;
-    }
+  .startup-title-compact {
+    font-size: clamp(0.45rem, 2.8vw, 0.75rem) !important;
+    width: 99vw !important;
+  }
 }
