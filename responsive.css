@@ -91,7 +91,7 @@ html, body {
     }
 }
 
-@media screen and (min-width: 769px) and (max-width: 849px) {
+@media screen and (min-width: 650px) and (max-width: 1024px) {
     .stApp {
         padding: 15px !important;
     }
