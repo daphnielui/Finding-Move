@@ -11,11 +11,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# 統一響應式設計
-with open('app.py', 'r') as f:
-    if 'responsive' in f.read():
-        pass  # CSS已在app.py中載入
-
 # 认证守卫已移除
 
 # 確保 session state 已初始化
