@@ -8,15 +8,69 @@ from utils.data_manager import DataManager
 from utils.recommendation_engine import RecommendationEngine
 from utils.weather_manager import WeatherManager
 import os
+import streamlit as st
+from pathlib import Path
+
+st.set_page_config(page_title="Finding Move", layout="wide")
+
+# 載入 CSS
+css_path = Path(".streamlit/responsive.css")
+if css_path.exists():
+    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
 # 設定頁面配置
 st.set_page_config(
-    page_title="台北運動場地搜尋引擎",
+    page_title="Finding Move 尋地寶",
     page_icon="🏃‍♂️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+# --- 讀取自訂 icon，轉 Base64 ---
+ICON_FILE = Path("attached_assets/Untitled design - 1.png")  # 或 .png
+if ICON_FILE.exists():
+    icon_b64 = base64.b64encode(ICON_FILE.read_bytes()).decode()
+    icon_mime = "image/svg+xml" if ICON_FILE.suffix.lower()==".svg" else "image/png"
+    st.markdown(f"""
+    <style>
+    /* A) 左上角：側邊欄切換按鈕（保留功能，只換外觀） */
+    header [data-testid="baseButton-headerNoPadding"] svg,
+    header [data-testid="stHeader"] button[kind="header"] svg,
+    header [data-testid="collapsedControl"] button svg {{
+      display: none !important;
+    }}
+    header [data-testid="baseButton-headerNoPadding"],
+    header [data-testid="stHeader"] button[kind="header"],
+    header [data-testid="collapsedControl"] button {{
+      background-image: url("data:{icon_mime};base64,{icon_b64}");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 22px 22px;
+      width: 36px; height: 36px; border-radius: 8px;
+    }}
+    header [data-testid="baseButton-headerNoPadding"]:hover,
+    header [data-testid="stHeader"] button[kind="header"]:hover,
+    header [data-testid="collapsedControl"] button:hover {{
+      background-color: rgba(0,0,0,0.06);
+    }}
 
+    /* B) 右上角：更多（三點）按鈕（同樣保留功能） */
+    [data-testid="stToolbar"] button[kind="header"] svg {{
+      display: none !important;
+    }}
+    [data-testid="stToolbar"] button[kind="header"] {{
+      background-image: url("data:{icon_mime};base64,{icon_b64}");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 20px 20px;
+      width: 36px; height: 36px; border-radius: 8px;
+    }}
+    [data-testid="stToolbar"] button[kind="header"]:hover {{
+      background-color: rgba(0,0,0,0.06);
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.warning("找不到 attached_assets/icons/myicon.svg（或 .png）")
 # 統一響應式設計 - 簡潔高效
 st.markdown("""
 <style>
