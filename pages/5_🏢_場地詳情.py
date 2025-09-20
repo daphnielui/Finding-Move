@@ -231,3 +231,22 @@ if venue_id:
         st.error(f"載入場地資訊時發生錯誤: {str(e)}")
 else:
     st.warning("請選擇要查看的場地")
+
+if "favorites" not in st.session_state:
+    st.session_state["favorites"] = {}
+
+vid = str(venue.get("id", venue.get("name")))
+info = {
+    "id": vid,
+    "name": venue.get("name"),
+    "address": venue.get("address"),
+    "sport_type": venue.get("sport_type"),
+    "rating": venue.get("rating"),
+    "price_level": venue.get("price_level"),
+    "lat": venue.get("lat") or venue.get("latitude"),
+    "lon": venue.get("lon") or venue.get("longitude"),
+}
+already = vid in st.session_state["favorites"]
+if st.button(("✓ 已收藏" if already else "加入收藏"), disabled=already):
+    st.session_state["favorites"][vid] = info
+    st.toast("已加入收藏", icon="❤️")
