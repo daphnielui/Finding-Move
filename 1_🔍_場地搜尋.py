@@ -939,7 +939,21 @@ with col2:
         st.markdown("**🔥 熱門搜尋:**")
         for search_term in popular_searches[:5]:
             if st.button(f"🔍 {search_term}", key=f"popular_{search_term}", use_container_width=True):
-                st.session_state.venue_search = search_term
+            # 1) 先初始化（在檔案前面一點放）
+if "venue_search" not in st.session_state:
+    st.session_state["venue_search"] = ""
+
+# 2) 建立文字輸入框：用不同 key，避免衝突
+search_term = st.text_input(
+    "關鍵字搜尋",
+    value=st.session_state["venue_search"],
+    key="w_venue_search",
+    placeholder="輸入場地名稱、地區、運動類型..."
+)
+
+# 3) 同步 widget 值到自家狀態（這樣就不會和 widget 的 key 打架）
+if st.session_state.get("w_venue_search", "") != st.session_state["venue_search"]:
+    st.session_state["venue_search"] = st.session_state["w_venue_search"]
                 st.rerun()
     
     # 推薦場地
