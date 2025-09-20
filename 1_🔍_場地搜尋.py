@@ -1021,3 +1021,30 @@ if st.session_state.get('selected_venue'):
         if st.button("🔄 清除選擇", use_container_width=True):
             st.session_state.selected_venue = None
             st.rerun()
+
+# 假設 row 是每筆場地資料
+if "favorites" not in st.session_state:
+    st.session_state["favorites"] = {}
+
+vid = str(row.get("id", row.get("name")))  # 有 id 就用 id，沒有就用 name
+info = {
+    "id": vid,
+    "name": row.get("name"),
+    "address": row.get("address"),
+    "sport_type": row.get("sport_type"),
+    "rating": row.get("rating"),
+    "price_level": row.get("price_level"),
+    "lat": row.get("lat") or row.get("latitude"),
+    "lon": row.get("lon") or row.get("longitude"),
+}
+
+c1, c2 = st.columns([3,1])
+with c1:
+    st.markdown(f"**{info['name']}** 　{info['sport_type']}　⭐ {info['rating']}　💲{info['price_level']}")
+    st.caption(info["address"])
+with c2:
+    already = vid in st.session_state["favorites"]
+    label = "✓ 已收藏" if already else "加入收藏"
+    if st.button(label, key=f"fav_{vid}", disabled=already):
+        st.session_state["favorites"][vid] = info
+        st.toast("已加入收藏", icon="✅")
