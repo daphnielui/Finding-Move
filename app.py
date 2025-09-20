@@ -1,38 +1,42 @@
+# --- app.py (clean & fixed header + custom icons + startup overlay) ---
 import sys, os
-sys.path.insert(0, os.path.dirname(__file__))
-import streamlit as st
-import pandas as pd
+from pathlib import Path
+import base64
 import time
-import random
+import streamlit as st
+import pandas as pd  # 你原本有 import，先保留以免後面用到
+
+# 確保可以匯入 utils/*
+sys.path.insert(0, os.path.dirname(__file__))
+
 from utils.data_manager import DataManager
 from utils.recommendation_engine import RecommendationEngine
 from utils.weather_manager import WeatherManager
-import os
-import streamlit as st
-from pathlib import Path
 
-st.set_page_config(page_title="Finding Move", layout="wide")
-
-# 載入 CSS
-css_path = Path(".streamlit/responsive.css")
-if css_path.exists():
-    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
-
-# 設定頁面配置
+# ========= 基本設定（只呼叫一次） =========
 st.set_page_config(
     page_title="Finding Move 尋地寶",
     page_icon="🏃‍♂️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded",
 )
-# --- 讀取自訂 icon，轉 Base64 ---
-ICON_FILE = Path("attached_assets/Untitled design - 1.png")  # 或 .png
+
+# ========= 載入全域 CSS =========
+css_path = Path(".streamlit/responsive.css")
+if css_path.exists():
+    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+else:
+    st.warning("⚠️ 找不到 .streamlit/responsive.css")
+
+# ========= 自訂 Icon（取代左上角側邊欄與右上角「更多」的圖示；保留原功能）=========
+ICON_FILE = Path("attached_assets/Untitled design - 1.png")  # ← 換成你的實際檔名/路徑
 if ICON_FILE.exists():
     icon_b64 = base64.b64encode(ICON_FILE.read_bytes()).decode()
-    icon_mime = "image/svg+xml" if ICON_FILE.suffix.lower()==".svg" else "image/png"
+    icon_mime = "image/svg+xml" if ICON_FILE.suffix.lower() == ".svg" else "image/png"
+
     st.markdown(f"""
     <style>
-    /* A) 左上角：側邊欄切換按鈕（保留功能，只換外觀） */
+    /* 左上角：側邊欄切換按鈕（隱藏原 SVG，用你的圖示） */
     header [data-testid="baseButton-headerNoPadding"] svg,
     header [data-testid="stHeader"] button[kind="header"] svg,
     header [data-testid="collapsedControl"] button svg {{
@@ -53,7 +57,7 @@ if ICON_FILE.exists():
       background-color: rgba(0,0,0,0.06);
     }}
 
-    /* B) 右上角：更多（三點）按鈕（同樣保留功能） */
+    /* 右上角：更多（三點）按鈕（同樣保留功能） */
     [data-testid="stToolbar"] button[kind="header"] svg {{
       display: none !important;
     }}
@@ -70,154 +74,46 @@ if ICON_FILE.exists():
     </style>
     """, unsafe_allow_html=True)
 else:
-    st.warning("找不到 attached_assets/icons/myicon.svg（或 .png）")
-# 統一響應式設計 - 簡潔高效
-st.markdown("""
-<style>
-    /* 統一響應式設計系統 */
-    * { box-sizing: border-box; }
-    html, body { width: 100%; overflow-x: hidden; margin: 0; padding: 0; }
-    
-    .stApp { 
-        max-width: 1200px; 
-        margin: 0 auto; 
-        padding: 20px; 
-    }
-    
-    /* 手機響應 */
-    @media screen and (max-width: 768px) {
-        .stApp { padding: 10px !important; }
-        h1 { font-size: 1.5rem !important; }
-        h2 { font-size: 1.3rem !important; }
-        .stButton > button { 
-            width: 100% !important; 
-            padding: 12px !important; 
-            font-size: 16px !important; 
-        }
-        .stTextInput > div > div > input,
-        .stSelectbox > div > div { 
-            font-size: 16px !important; 
-            padding: 12px !important; 
-        }
-        [data-testid="column"] { padding: 5px !important; }
-        iframe { width: 100% !important; height: 400px !important; }
-        .js-plotly-plot { width: 100% !important; }
-    }
-    
-    @media screen and (max-width: 480px) {
-        .stApp { padding: 5px !important; }
-        h1 { font-size: 1.3rem !important; }
-        iframe { height: 350px !important; }
-    }
-    
-    /* 啟動動畫響應式 */
-    .startup-title-compact {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, calc(-50% + 4.5cm));
-        font-size: clamp(0.6rem, 1.8vw, 0.9rem);
-        color: white;
-        white-space: nowrap;
-        width: 95vw;
-        text-align: center;
-        font-family: 'Microsoft JhengHei', sans-serif;
-    }
-    
-    @media screen and (max-width: 768px) {
-        .startup-title-compact {
-            font-size: clamp(0.5rem, 2.2vw, 0.8rem) !important;
-            width: 98vw !important;
-        }
-    }
-    
-    .app-startup-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #a6bee2;
-        z-index: 99999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-    }
-    
-    .startup-logo {
-        max-width: 100vw;
-        max-height: 100vh;
-        width: auto;
-        height: auto;
-    }
-    
-    .app-startup-overlay.hidden {
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
-    }
-    
-    .bounce-char {
-        display: inline-block;
-        animation: charBounce 0.6s ease-in-out;
-    }
-    
-    @keyframes charBounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-0.2cm); }
-    }
-    
-    /* 隐藏顶部白色条 */
-    header[data-testid="stHeader"] { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
+    st.warning("⚠️ 找不到自訂 icon 檔（attached_assets/Untitled design - 1.png）")
 
-# ===== 启动页面逻辑 =====
+# ========= 啟動畫面（startup overlay）=========
+# 小心：不要把整個 header 隱藏，不然你自訂 icon 看不到
+# 讀取 Logo（穩健寫法，找不到就不擋啟動）
+logo_b64 = ""
+logo_file = Path("attached_assets/FM logo_1757941352267.jpg")
+if logo_file.exists():
+    try:
+        logo_b64 = base64.b64encode(logo_file.read_bytes()).decode()
+    except Exception as e:
+        st.warning(f"讀取啟動 Logo 失敗：{e}")
 
-# 读取logo文件
-with open('attached_assets/FM logo_1757941352267.jpg', 'rb') as f:
-    logo_data = f.read()
-
-# 编码为base64
-import base64
-logo_base64 = base64.b64encode(logo_data).decode()
-
-# 完整的启动页面HTML
-startup_html = f'''
+startup_html = f"""
 <div id="appStartup" class="app-startup-overlay" style="display: flex !important;">
-    <img src="data:image/jpeg;base64,{logo_base64}" class="startup-logo" alt="Finding Move Logo">
+    {'<img src="data:image/jpeg;base64,' + logo_b64 + '" class="startup-logo" alt="Finding Move Logo">' if logo_b64 else ''}
     <div class="startup-title-compact">
         <span class="bounce-char">尋</span><span class="bounce-char">地</span><span class="bounce-char">寳</span><span class="bounce-char"> </span><span class="bounce-char">-</span><span class="bounce-char"> </span><span class="bounce-char">根</span><span class="bounce-char">據</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">節</span><span class="bounce-char">奏</span><span class="bounce-char">，</span><span class="bounce-char">找</span><span class="bounce-char">到</span><span class="bounce-char">最</span><span class="bounce-char">適</span><span class="bounce-char">合</span><span class="bounce-char">您</span><span class="bounce-char">的</span><span class="bounce-char">運</span><span class="bounce-char">動</span><span class="bounce-char">場</span><span class="bounce-char">所</span>
     </div>
 </div>
-
 <script>
 setTimeout(function() {{
     var overlay = document.getElementById('appStartup');
     if (overlay) {{
         overlay.classList.add('hidden');
     }}
-}}, 3000);
+}}, 2200);
 </script>
-'''
-
-# 显示启动页面
+"""
 st.markdown(startup_html, unsafe_allow_html=True)
 
-# 等待3.5秒显示启动动画
-time.sleep(3.5)
+# 讓 overlay 有機會顯示一下（避免卡太久）
+time.sleep(2.4)
 
-# 初始化session state
-if 'current_sport_icon' not in st.session_state:
-    st.session_state.current_sport_icon = 0
-if 'selected_district' not in st.session_state:
-    st.session_state.selected_district = '中正區'
-if 'user_location' not in st.session_state:
-    st.session_state.user_location = None
+# ========= Session State 初始化 =========
+st.session_state.setdefault("current_sport_icon", 0)
+st.session_state.setdefault("selected_district", "中正區")
+st.session_state.setdefault("user_location", None)
+st.session_state["startup_done"] = True
 
-# 设置启动完成标志
-st.session_state.startup_done = True
-
-# 自动跳转到主页面
+# ========= 導向主功能頁 =========
 st.switch_page("pages/1_🔍_場地搜尋.py")
+# --- end of header section ---
