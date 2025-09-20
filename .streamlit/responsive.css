@@ -116,22 +116,3 @@ html, body {
         width: 99vw !important;
     }
 }
-/* 左上角「側邊欄切換」按鈕：隱藏原 SVG、套用自訂圖示 */
-header [data-testid="baseButton-headerNoPadding"] svg {
-  display: none !important;
-}
-
-/* 使用你的 icon 當作背景，按鈕仍可點擊，功能不變 */
-header [data-testid="baseButton-headerNoPadding"] {
-  background-image: url("attached_assets/Untitled design - 1.png"); /* ← 也可用 .png */
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 22px 22px;      /* 圖示大小 */
-  width: 36px; height: 36px;       /* 按鈕外框大小 */
-  border-radius: 8px;
-}
-
-/* Hover/Focus 狀態（可依主題色調整） */
-header [data-testid="baseButton-headerNoPadding"]:hover {
-  background-color: rgba(0,0,0,0.05);
-}
