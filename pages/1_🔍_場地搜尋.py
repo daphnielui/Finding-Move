@@ -582,7 +582,7 @@ with search_col1:
     search_query = st.text_input("搜尋", placeholder=search_placeholder, label_visibility="collapsed")
 
 with search_col2:
-    search_button = st.button("🔍", help="開始搜尋", use_container_width=True, type="primary")
+    search_button = st.button("attached_assets/Untitled design - 2.png", help="開始搜尋", use_container_width=True, type="primary")
 
 # 篩選條件
 st.markdown('<div style="margin-top: 20px;"><h4 style="color: #424242;">📋 篩選條件</h4></div>', unsafe_allow_html=True)
