@@ -505,6 +505,27 @@ weather_icon = st.session_state.weather_manager.get_weather_icon(
     weather_info['weather_description'], 
     weather_info['temperature']
 )
+import streamlit as st
+from utils.weather_manager import WeatherManager
+
+# ========== 天氣顯示區塊 ==========
+# 預設地區（例如台北）
+district = st.session_state.get("selected_district", "台北")
+
+weather_data = WeatherManager.get_weather(city=district)
+
+if weather_data:
+    st.markdown(f"## 🌤️ {district} 即時天氣")
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.write(f"🌡️ 溫度: **{weather_data['main']['temp']}°C**")
+        st.write(f"💧 濕度: **{weather_data['main']['humidity']}%**")
+    with col2:
+        st.write(f"☁️ 天氣狀況: **{weather_data['weather'][0]['description']}**")
+        st.write(f"💨 風速: **{weather_data['wind']['speed']} m/s**")
+else:
+    st.warning("⚠️ 無法取得天氣資訊")
+# ==================================
 
 # 根據運動適宜性給出建議
 def get_exercise_advice(temp, humidity, precipitation):
