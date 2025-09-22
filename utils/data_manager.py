@@ -111,3 +111,41 @@ class DataManager:
             filtered = filtered[filtered["rating"] >= min_rating]
 
         return filtered if not filtered.empty else pd.DataFrame()
+        # ---- 簡要統計（供側邊欄） ----
+    def get_venue_stats(self) -> dict:
+        """回傳簡要統計，供側邊欄顯示使用。"""
+        import pandas as pd
+        df = self.venues_data
+        if df is None or getattr(df, "empty", True):
+            return {
+                "total_venues": 0,
+                "sport_types": 0,
+                "districts": 0,
+                "avg_price_per_hour": None,
+                "avg_rating": None,
+            }
+
+        def _mean_safe(series):
+            try:
+                val = pd.to_numeric(series, errors="coerce").mean()
+                return None if pd.isna(val) else float(val)
+            except Exception:
+                return None
+
+        total = int(len(df))
+        sport_types = int(df["sport_type"].nunique()) if "sport_type" in df.columns else 0
+        districts = int(df["district"].nunique()) if "district" in df.columns else 0
+        avg_price = _mean_safe(df["price_per_hour"]) if "price_per_hour" in df.columns else None
+        avg_rating = _mean_safe(df["rating"]) if "rating" in df.columns else None
+
+        if avg_price is not None: avg_price = round(avg_price, 0)
+        if avg_rating is not None: avg_rating = round(avg_rating, 1)
+
+        return {
+            "total_venues": total,
+            "sport_types": sport_types,
+            "districts": districts,
+            "avg_price_per_hour": avg_price,
+            "avg_rating": avg_rating,
+        }
+
