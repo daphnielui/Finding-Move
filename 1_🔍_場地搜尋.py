@@ -78,8 +78,8 @@ if 'startup_done' not in st.session_state:
         /* 响应式设计 - 电脑设备 */
         @media only screen and (min-width: 1025px) {{
             #appStartup img {{
-                width: 80% !important;
-                height: 80% !important;
+                width: 100% !important;
+                height: 100% !important;
                 object-fit: cover !important;
             }}
             #appStartup .text-overlay {{
@@ -432,6 +432,46 @@ if 'selected_district' not in st.session_state:
 if 'user_location' not in st.session_state:
     st.session_state.user_location = None
 
+# ===== 頁首：即時天氣橫幅（WeatherManager） =====
+def render_weather_banner_wm():
+    wm = st.session_state.get("weather_manager")
+    dist = st.session_state.get("selected_district", "中正區")
+    if not wm:
+        return
+    info = wm.get_current_weather(dist)
+    icon = wm.get_weather_icon(info.get("weather_description",""), int(info.get("temperature",0) or 0))
+    with st.container():
+        st.markdown('<div class="weather-banner" style="background: linear-gradient(90deg, #eff4ff, #f7fbff); padding: 14px 18px; border-radius: 14px; border: 1px solid #e6eefc; margin: 8px 0 16px 0;">', unsafe_allow_html=True)
+        c1,c2,c3,c4,c5 = st.columns([2,1,1,1,1])
+        with c1:
+            st.markdown(f"### {icon} {dist} 即時天氣")
+            st.caption(f"更新 {info.get('update_time','--:--')} | {info.get('weather_description','-')} | 舒適度：{info.get('comfort_index','-')}")
+        with c2:
+            st.metric("溫度(°C)", info.get("temperature","—"))
+            st.metric("體感(°C)", info.get("apparent_temperature","—"))
+        with c3:
+            st.metric("濕度(%)", info.get("humidity","—"))
+            st.metric("降雨機率(%)", info.get("precipitation_probability","—"))
+        with c4:
+            st.metric("風向", info.get("wind_direction","—"))
+            st.metric("風速(級)", info.get("wind_speed","—"))
+        with c5:
+            # 簡易位置切換（維持你原本的 selected_district 狀態）
+            with st.expander("切換地區", expanded=False):
+                districts = wm.get_available_districts() or [dist]
+                try:
+                    idx = districts.index(dist)
+                except ValueError:
+                    idx = 0
+                nd = st.selectbox("行政區", districts, index=idx)
+                if st.button("更新天氣", use_container_width=True):
+                    st.session_state.selected_district = nd
+                    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# 呼叫顯示
+render_weather_banner_wm()
+
 # 運動icon列表和動態更新
 sports_icons = ["🏀", "⚽", "🏸", "🏐", "🎾", "🏊‍♂️", "🏃‍♂️", "🚴‍♂️", "🏋️‍♂️", "🤸‍♂️"]
 
@@ -505,27 +545,6 @@ weather_icon = st.session_state.weather_manager.get_weather_icon(
     weather_info['weather_description'], 
     weather_info['temperature']
 )
-import streamlit as st
-from utils.weather_manager import WeatherManager
-
-# ========== 天氣顯示區塊 ==========
-# 預設地區（例如台北）
-district = st.session_state.get("selected_district", "台北")
-
-weather_data = WeatherManager.get_weather(city=district)
-
-if weather_data:
-    st.markdown(f"## 🌤️ {district} 即時天氣")
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.write(f"🌡️ 溫度: **{weather_data['main']['temp']}°C**")
-        st.write(f"💧 濕度: **{weather_data['main']['humidity']}%**")
-    with col2:
-        st.write(f"☁️ 天氣狀況: **{weather_data['weather'][0]['description']}**")
-        st.write(f"💨 風速: **{weather_data['wind']['speed']} m/s**")
-else:
-    st.warning("⚠️ 無法取得天氣資訊")
-# ==================================
 
 # 根據運動適宜性給出建議
 def get_exercise_advice(temp, humidity, precipitation):
@@ -960,21 +979,7 @@ with col2:
         st.markdown("**🔥 熱門搜尋:**")
         for search_term in popular_searches[:5]:
             if st.button(f"🔍 {search_term}", key=f"popular_{search_term}", use_container_width=True):
-            # 1) 先初始化（在檔案前面一點放）
-if "venue_search" not in st.session_state:
-    st.session_state["venue_search"] = ""
-
-# 2) 建立文字輸入框：用不同 key，避免衝突
-search_term = st.text_input(
-    "關鍵字搜尋",
-    value=st.session_state["venue_search"],
-    key="w_venue_search",
-    placeholder="輸入場地名稱、地區、運動類型..."
-)
-
-# 3) 同步 widget 值到自家狀態（這樣就不會和 widget 的 key 打架）
-if st.session_state.get("w_venue_search", "") != st.session_state["venue_search"]:
-    st.session_state["venue_search"] = st.session_state["w_venue_search"]
+                st.session_state.venue_search = search_term
                 st.rerun()
     
     # 推薦場地
@@ -1056,30 +1061,3 @@ if st.session_state.get('selected_venue'):
         if st.button("🔄 清除選擇", use_container_width=True):
             st.session_state.selected_venue = None
             st.rerun()
-
-# 假設 row 是每筆場地資料
-if "favorites" not in st.session_state:
-    st.session_state["favorites"] = {}
-
-vid = str(row.get("id", row.get("name")))  # 有 id 就用 id，沒有就用 name
-info = {
-    "id": vid,
-    "name": row.get("name"),
-    "address": row.get("address"),
-    "sport_type": row.get("sport_type"),
-    "rating": row.get("rating"),
-    "price_level": row.get("price_level"),
-    "lat": row.get("lat") or row.get("latitude"),
-    "lon": row.get("lon") or row.get("longitude"),
-}
-
-c1, c2 = st.columns([3,1])
-with c1:
-    st.markdown(f"**{info['name']}** 　{info['sport_type']}　⭐ {info['rating']}　💲{info['price_level']}")
-    st.caption(info["address"])
-with c2:
-    already = vid in st.session_state["favorites"]
-    label = "✓ 已收藏" if already else "加入收藏"
-    if st.button(label, key=f"fav_{vid}", disabled=already):
-        st.session_state["favorites"][vid] = info
-        st.toast("已加入收藏", icon="✅")
