@@ -1,339 +1,135 @@
 import json
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from typing import Dict, Any, Optional
 import os
 
 class WeatherManager:
-    """
-    天氣資料管理類別，負責處理台北市天氣API資料
-    """
-    
-    def __init__(self):
-        self.weather_data = None
-        self.districts_weather = {}
-        self._load_weather_data()
-    
-    def _load_weather_data(self):
-        """載入天氣API JSON資料"""
-
-        # 先嘗試從 API (st.secrets) 讀取
-        try:
-            import streamlit as st  # 僅在 Streamlit 環境有效
-            for key in ('WEATHER_API_URL','CWA_API_URL'):
-                if hasattr(st, 'secrets') and key in st.secrets:
-                    import requests
-                    url = st.secrets[key]
-                    try:
-                        r = requests.get(url, timeout=8)
-                        r.raise_for_status()
-                        self.weather_data = r.json()
-                        self._parse_weather_data()
-                        print("成功從 API 讀取天氣資料")
-                        return
-                    except Exception as e:
-                        print(f"API 讀取失敗: {e}")
-        except Exception:
-            pass
-
-        # 若沒有 API，就找本地備援 JSON（多檔名相容）
-        candidates = [
-            "attached_assets/response_1757912291602_1757930584417.json",
-            "response_1758531461872.json",
-            "attached_assets/response_1758531461872.json",
-            "attached_assets/response_1758531461872.json".replace("attached_assets/",""),
+    """台北市天氣資料管理。優先讀取本地 JSON（離線備援），可擴充支援 API。"""
+    def __init__(self, fallback_json_paths: Optional[list] = None):
+        self.data = None
+        self.by_district: Dict[str, dict] = {}
+        self.fallback_json_paths = fallback_json_paths or [
+            'response_1758531461872.json',  # 使用者提供
+            os.path.join('attached_assets', 'response_1758531461872.json'),
         ]
-        json_path = None
-        for p in candidates:
-            if os.path.exists(p):
-                json_path = p
-                break
-        if not json_path:
-            print("找不到天氣備援資料檔案")
-            return
+        self._load()
 
+    def _load(self):
+        # 嘗試讀取本地 JSON
+        for p in self.fallback_json_paths:
+            if os.path.exists(p):
+                try:
+                    with open(p, 'r', encoding='utf-8') as f:
+                        self.data = json.load(f)
+                    break
+                except Exception:
+                    continue
+        # 解析
+        if self.data:
+            self._parse()
+
+    def _parse(self):
         try:
-            with open(json_path, 'r', encoding='utf-8') as f:
-                self.weather_data = json.load(f)
-            # 解析各區域天氣資料
-            self._parse_weather_data()
-            print("成功載入天氣資料（本地檔）")
-            return
-        except Exception as e:
-            print(f"載入天氣資料時發生錯誤: {e}")
-            return
-    
-    def _parse_weather_data(self):
-        """解析天氣資料"""
-        if not self.weather_data:
-            return
-        
-        try:
-            locations = self.weather_data.get('records', {}).get('Locations', [])
-            
-            for location_group in locations:
-                if location_group.get('LocationsName') == '臺北市':
-                    for location in location_group.get('Location', []):
-                        district_name = location.get('LocationName')
-                        
-                        # 解析各種天氣元素
-                        weather_elements = {}
-                        for element in location.get('WeatherElement', []):
-                            element_name = element.get('ElementName')
-                            element_data = element.get('Time', [])
-                            
-                            weather_elements[element_name] = element_data
-                        
-                        self.districts_weather[district_name] = {
-                            'location_name': district_name,
-                            'geocode': location.get('Geocode'),
-                            'latitude': location.get('Latitude'),
-                            'longitude': location.get('Longitude'),
-                            'weather_elements': weather_elements
+            records = self.data.get('records', {})
+            groups = records.get('Locations', [])
+            for g in groups:
+                if g.get('LocationsName') in ('臺北市', '台北市'):
+                    for loc in g.get('Location', []):
+                        name = loc.get('LocationName')
+                        # 整理各元素
+                        elements = {}
+                        for e in loc.get('WeatherElement', []):
+                            elements[e.get('ElementName')] = e.get('Time', [])
+                        self.by_district[name] = {
+                            'lat': loc.get('Latitude'),
+                            'lon': loc.get('Longitude'),
+                            'elements': elements,
                         }
-            
-        except Exception as e:
-            print(f"解析天氣資料時發生錯誤: {e}")
-    
-    def _get_current_time_data(self, time_data: List[Dict], current_time: datetime) -> Optional[Dict]:
-        """獲取最接近當前時間的資料"""
-        if not time_data:
+        except Exception:
+            self.by_district = {}
+
+    def _nearest_time_value(self, items, key: str, now_dt: Optional[datetime] = None):
+        """在多個時間片段中找擇最近的一筆，回傳 ElementValue 的 dict。"""
+        if not items:
             return None
-        
-        closest_data = None
-        min_time_diff = float('inf')
-        
-        for data_point in time_data:
+        now_dt = now_dt or datetime.now()
+        best = None
+        best_diff = float('inf')
+        for it in items:
+            # 支援兩種格式：有 StartTime/EndTime 或 DataTime
+            tstr = it.get('DataTime') or it.get('StartTime')
             try:
-                data_time_str = data_point.get('DataTime', '')
-                data_time = datetime.fromisoformat(data_time_str.replace('+08:00','').replace('Z',''))
-                
-                time_diff = abs((current_time - data_time).total_seconds())
-                
-                if time_diff < min_time_diff:
-                    min_time_diff = time_diff
-                    closest_data = data_point
-            except:
+                t = datetime.fromisoformat(tstr.replace('+08:00', ''))
+            except Exception:
                 continue
-        
-        return closest_data
-    
-    def get_current_weather(self, district: str = '中正區') -> Dict[str, Any]:
-        """
-        獲取指定地區的當前天氣資訊
-        
-        Args:
-            district: 地區名稱，預設為中正區
-            
-        Returns:
-            包含天氣資訊的字典
-        """
-        if district not in self.districts_weather:
-            # 如果找不到指定地區，使用第一個可用的地區
-            available_districts = list(self.districts_weather.keys())
-            if available_districts:
-                district = available_districts[0]
-            else:
-                return self._get_default_weather()
-        
-        district_data = self.districts_weather[district]
-        weather_elements = district_data['weather_elements']
-        current_time = datetime.now()
-        
-        weather_info = {
-            'district': district,
-            'temperature': 25,
-            'apparent_temperature': 27,
-            'humidity': 65,
-            'wind_direction': '東北風',
-            'wind_speed': 3,
-            'precipitation_probability': 10,
-            'weather_description': '晴朗',
-            'comfort_index': '舒適',
-            'update_time': current_time.strftime('%H:%M')
-        }
-        
-        try:
-            # 獲取溫度
-            if '溫度' in weather_elements:
-                temp_data = self._get_current_time_data(weather_elements['溫度'], current_time)
-                if temp_data and temp_data.get('ElementValue'):
-                    temp_value = temp_data['ElementValue'][0].get('Temperature')
-                    if temp_value:
-                        weather_info['temperature'] = int(temp_value)
-            
-            # 獲取體感溫度
-            if '體感溫度' in weather_elements:
-                apparent_temp_data = self._get_current_time_data(weather_elements['體感溫度'], current_time)
-                if apparent_temp_data and apparent_temp_data.get('ElementValue'):
-                    apparent_temp_value = apparent_temp_data['ElementValue'][0].get('ApparentTemperature')
-                    if apparent_temp_value:
-                        weather_info['apparent_temperature'] = int(float(apparent_temp_value))
-            
-            # 獲取相對濕度
-            if '相對濕度' in weather_elements:
-                humidity_data = self._get_current_time_data(weather_elements['相對濕度'], current_time)
-                if humidity_data and humidity_data.get('ElementValue'):
-                    humidity_value = humidity_data['ElementValue'][0].get('RelativeHumidity')
-                    if humidity_value:
-                        weather_info['humidity'] = int(float(humidity_value))
-            
-            # 獲取風向
-            if '風向' in weather_elements:
-                wind_dir_data = self._get_current_time_data(weather_elements['風向'], current_time)
-                if wind_dir_data and wind_dir_data.get('ElementValue'):
-                    wind_dir_value = wind_dir_data['ElementValue'][0].get('WindDirection')
-                    if wind_dir_value:
-                        weather_info['wind_direction'] = self._convert_wind_direction(wind_dir_value)
-            
-            # 獲取風速
-            if '風速' in weather_elements:
-                wind_speed_data = self._get_current_time_data(weather_elements['風速'], current_time)
-                if wind_speed_data and wind_speed_data.get('ElementValue'):
-                    wind_speed_value = wind_speed_data['ElementValue'][0].get('BeaufortScale')
-                    if wind_speed_value:
-                        weather_info['wind_speed'] = int(float(wind_speed_value))
-            
-            # 獲取降雨機率
-            if '3小時降雨機率' in weather_elements:
-                precip_data = self._get_current_time_data(weather_elements['3小時降雨機率'], current_time)
-                if precip_data and precip_data.get('ElementValue'):
-                    precip_value = precip_data['ElementValue'][0].get('ProbabilityOfPrecipitation')
-                    if precip_value:
-                        weather_info['precipitation_probability'] = int(float(precip_value))
-            
-            # 獲取天氣現象
-            if '天氣現象' in weather_elements:
-                weather_data = self._get_current_time_data(weather_elements['天氣現象'], current_time)
-                if weather_data and weather_data.get('ElementValue'):
-                    weather_value = weather_data['ElementValue'][0].get('Weather')
-                    if weather_value:
-                        weather_info['weather_description'] = weather_value
-            
-            # 獲取舒適度指數
-            if '舒適度指數' in weather_elements:
-                comfort_data = self._get_current_time_data(weather_elements['舒適度指數'], current_time)
-                if comfort_data and comfort_data.get('ElementValue'):
-                    comfort_value = comfort_data['ElementValue'][0].get('ComfortIndexDescription')
-                    if comfort_value:
-                        weather_info['comfort_index'] = comfort_value
-            
-        except Exception as e:
-            print(f"解析天氣資料時發生錯誤: {e}")
-        
-        return weather_info
-    
-    def _convert_wind_direction(self, wind_direction: str) -> str:
-        """轉換風向數值為中文描述"""
-        try:
-            degrees = float(wind_direction)
-            
-            directions = [
-                "北風", "北北東風", "東北風", "東北東風",
-                "東風", "東南東風", "東南風", "南南東風",
-                "南風", "南南西風", "西南風", "西南西風",
-                "西風", "西北西風", "西北風", "北北西風"
-            ]
-            
-            index = int((degrees + 11.25) / 22.5) % 16
-            return directions[index]
-            
-        except:
-            return wind_direction if wind_direction else "微風"
-    
-    def _get_default_weather(self) -> Dict[str, Any]:
-        """返回預設天氣資訊"""
+            diff = abs((now_dt - t).total_seconds())
+            if diff < best_diff:
+                best = it
+                best_diff = diff
+        if not best:
+            return None
+        ev = best.get('ElementValue') or []
+        if ev and isinstance(ev, list):
+            # 可能是 [{Weather: "晴", WeatherCode: "01"}] 或 {Value: "30"}
+            return ev[0]
+        return None
+
+    def get_current_weather(self, district: str) -> Dict[str, Any]:
+        """回傳統一結構的即時天氣資訊。若資料不足，以安全預設填補。"""
+        d = self.by_district.get(district) or {}
+        elements = d.get('elements', {})
+
+        def val_of(name, subkey='Value', default=None):
+            v = self._nearest_time_value(elements.get(name, []), name)
+            if isinstance(v, dict):
+                return v.get(subkey) or v.get('Weather') or default
+            return v or default
+
+        desc = val_of('WeatherDescription', 'Weather') or val_of('Wx', 'Value') or '晴'
+        temp = float(val_of('T', 'Value', 28) or 28)
+        rh = float(val_of('RH', 'Value', 70) or 70)
+        wind = val_of('Wind', 'Value') or ''
+        pop = float(val_of('PoP6h', 'Value', 10) or 10)
+        app = float(val_of('AT', 'Value', temp) or temp)
+
+        wind_dir = ''
+        wind_speed = ''
+        if isinstance(wind, str):
+            # 可能格式 like "東北風 3 級"
+            parts = wind.replace('　', ' ').split()
+            if parts:
+                wind_dir = parts[0]
+            if len(parts) >= 2:
+                wind_speed = parts[1]
+
+        comfort = self._comfort_index(temp, rh, pop)
+
         return {
-            'district': '台北市',
-            'temperature': 25,
-            'apparent_temperature': 27,
-            'humidity': 65,
-            'wind_direction': '東北風',
-            'wind_speed': 3,
-            'precipitation_probability': 10,
-            'weather_description': '晴朗',
-            'comfort_index': '舒適',
-            'update_time': datetime.now().strftime('%H:%M')
+            "district": district,
+            "weather_description": str(desc),
+            "temperature": round(temp, 1),
+            "humidity": int(round(rh)),
+            "wind_direction": wind_dir or '—',
+            "wind_speed": wind_speed or '—',
+            "precipitation_probability": int(round(pop)),
+            "apparent_temperature": round(app, 1),
+            "comfort_index": comfort,
+            "update_time": datetime.now().strftime('%Y-%m-%d %H:%M')
         }
-    
-    def get_weather_icon(self, weather_description: str, temperature: int) -> str:
-        """根據天氣描述和溫度返回對應的emoji icon"""
-        weather_desc = weather_description.lower()
-        
-        # 根據關鍵字判斷天氣icon
-        if '晴' in weather_desc or '陽' in weather_desc:
-            return '☀️'
-        elif '雲' in weather_desc or '陰' in weather_desc:
-            if '多雲' in weather_desc:
-                return '⛅'
-            else:
-                return '☁️'
-        elif '雨' in weather_desc:
-            if '大雨' in weather_desc or '豪雨' in weather_desc:
-                return '🌧️'
-            elif '小雨' in weather_desc:
-                return '🌦️'
-            else:
-                return '🌧️'
-        elif '雷' in weather_desc:
-            return '⛈️'
-        elif '雪' in weather_desc:
-            return '❄️'
-        elif '霧' in weather_desc:
-            return '🌫️'
-        else:
-            # 根據溫度判斷
-            if temperature >= 30:
-                return '☀️'
-            elif temperature >= 25:
-                return '⛅'
-            else:
-                return '☁️'
-    
-    def get_available_districts(self) -> List[str]:
-        """獲取可用的地區列表"""
-        return list(self.districts_weather.keys())
-    
-    def get_hourly_forecast(self, district: str = '中正區', hours: int = 24) -> List[Dict[str, Any]]:
-        """
-        獲取指定地區的小時預報
-        
-        Args:
-            district: 地區名稱
-            hours: 預報小時數
-            
-        Returns:
-            小時預報列表
-        """
-        if district not in self.districts_weather:
-            return []
-        
-        district_data = self.districts_weather[district]
-        weather_elements = district_data['weather_elements']
-        forecast_list = []
-        
-        try:
-            if '溫度' in weather_elements:
-                temp_data = weather_elements['溫度']
-                
-                for i, data_point in enumerate(temp_data[:hours]):
-                    time_str = data_point.get('DataTime', '')
-                    temp_value = data_point.get('ElementValue', [{}])[0].get('Temperature', '25')
-                    
-                    try:
-                        forecast_time = datetime.fromisoformat(time_str.replace('+08:00','').replace('Z',''))
-                        temp = int(temp_value)
-                        
-                        forecast_list.append({
-                            'time': forecast_time.strftime('%H:%M'),
-                            'date': forecast_time.strftime('%m/%d'),
-                            'temperature': temp,
-                            'hour': forecast_time.hour
-                        })
-                    except:
-                        continue
-            
-        except Exception as e:
-            print(f"獲取小時預報時發生錯誤: {e}")
-        
-        return forecast_list
+
+    def _comfort_index(self, t: float, rh: float, pop: float) -> str:
+        score = 10.0 - (max(0, t - 26) * 0.2 + max(0, rh - 60) * 0.05 + pop * 0.02)
+        if score >= 8.5: return "舒適"
+        if score >= 7.0: return "尚可"
+        if score >= 5.5: return "悶熱"
+        return "不舒適"
+
+    @staticmethod
+    def get_weather_icon(desc: str, temperature: float) -> str:
+        d = (desc or '').lower()
+        if '雨' in d: return '🌧️'
+        if '雷' in d: return '⛈️'
+        if '雲' in d or '陰' in d: return '⛅'
+        if temperature >= 32: return '🥵'
+        if temperature <= 15: return '🥶'
+        return '☀️'
