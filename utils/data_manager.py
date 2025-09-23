@@ -74,6 +74,26 @@ class DataManager:
 
         results = self.venues_data[mask]
         return results if not results.empty else pd.DataFrame()
+    
+    from typing import List
+
+    def get_all_venues(self):
+        return self.venues_data
+
+    def get_sport_types(self) -> List[str]:
+        """回傳運動類型清單（字串、去重、排序）"""
+        df = self.venues_data
+        if df is None or df.empty or "sport_type" not in df.columns:
+            return []
+        return sorted(df["sport_type"].dropna().astype(str).unique().tolist())
+
+    def get_districts(self) -> List[str]:
+        """回傳行政區清單"""
+        df = self.venues_data
+        if df is None or df.empty or "district" not in df.columns:
+            return []
+        return sorted(df["district"].dropna().astype(str).unique().tolist())
+
 
     def get_filtered_venues(self, sport_types=None, districts=None, price_range=None, facilities=None, min_rating=0.0, search_query=None):
         """ 多條件篩選場地 """
